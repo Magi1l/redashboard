@@ -1,4 +1,18 @@
-import mongoose from "mongoose";
+import mongoose, { Document, Model } from "mongoose";
+
+export interface LevelHistory {
+  date: Date;
+  amount: number;
+}
+
+export interface LevelDocument extends Document {
+  userId: string;
+  guildId: string;
+  xp: number;
+  level: number;
+  lastMessage: Date;
+  xpHistory: LevelHistory[];
+}
 
 const LevelSchema = new mongoose.Schema({
   userId: { type: String, required: true },
@@ -16,4 +30,6 @@ const LevelSchema = new mongoose.Schema({
 
 LevelSchema.index({ userId: 1, guildId: 1 }, { unique: true });
 
-export default mongoose.models.Level || mongoose.model("Level", LevelSchema); 
+const LevelModel = (mongoose.models.Level as Model<LevelDocument>) || mongoose.model<LevelDocument>("Level", LevelSchema);
+
+export default LevelModel; 

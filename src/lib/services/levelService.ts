@@ -1,7 +1,7 @@
-import LevelDefault from "@/lib/models/Level";
+import LevelDefault, { LevelDocument, LevelHistory } from "@/lib/models/Level";
 import Config from "@/lib/models/Config";
 
-const Level: any = LevelDefault;
+const Level = LevelDefault;
 
 export async function addXP(discordId: string, guildId: string, amount: number) {
   return await Level.findOneAndUpdate(
@@ -51,12 +51,12 @@ export async function grantXP({ discordId, guildId, type, baseXP, channelId, req
   // 5. 일일 상한 체크 및 지급량 조정
   let today = new Date();
   today.setHours(0, 0, 0, 0);
-  const levelDoc: any = await Level.findOne({ userId: discordId, guildId });
+  const levelDoc: LevelDocument | null = await Level.findOne({ userId: discordId, guildId });
   let todayXP = 0;
   if (levelDoc && Array.isArray(levelDoc.xpHistory)) {
     todayXP = levelDoc.xpHistory
-      .filter((h: any) => h.date && new Date(h.date) >= today)
-      .reduce((sum: number, h: any) => sum + h.amount, 0);
+      .filter((h: LevelHistory) => h.date && new Date(h.date) >= today)
+      .reduce((sum: number, h: LevelHistory) => sum + h.amount, 0);
   }
   if (policy.dailyCap > 0 && todayXP >= policy.dailyCap) {
     return { success: false, reason: "일일 XP 상한 도달" };
