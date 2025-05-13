@@ -24,10 +24,44 @@ type GrantXPParams = {
 // (임시) 쿨타임 체크용 in-memory map (실서비스는 Redis 등 외부 캐시 권장)
 const xpCooldownMap: Record<string, number> = {};
 
-export async function grantXP({ discordId, guildId, type, baseXP, channelId, requireMic }: GrantXPParams) {
+// activityXPPolicy 타입 명확화
+interface ActivityXPPolicyItem {
+  enabled: boolean;
+  minXP: number;
+  maxXP: number;
+  multiplier: number;
+  cooldownSec: number;
+  dailyCap?: number;
+  requireMic?: boolean;
+}
+interface ActivityXPPolicy {
+  message: ActivityXPPolicyItem;
+  voice: ActivityXPPolicyItem;
+  reaction: ActivityXPPolicyItem;
+  command: ActivityXPPolicyItem;
+}
+
+// GrantXP 반환 타입 명확화
+interface GrantXPResult {
+  success: boolean;
+  reason?: string;
+  xp?: number;
+  user?: LevelDocument | null;
+}
+
+// ConfigDocument 타입 명확화 (임시)
+interface ConfigDocument {
+  key: string;
+  baseXP?: number;
+  multiplier?: number;
+  activityXPPolicy?: ActivityXPPolicy;
+  // ...필요시 추가 필드...
+}
+
+export async function grantXP({ discordId, guildId, type, baseXP, channelId, requireMic }: GrantXPParams): Promise<GrantXPResult> {
   // 1. 정책 조회
-  const config = await Config.findOne({ key: `xp:${guildId}` });
-  const policy = config?.activityXPPolicy?.[type] || { enabled: true, minXP: 1, maxXP: 100, multiplier: 1.0, cooldownSec: 60 };
+  const config = await Config.findOne({ key: `xp:${guildId}` }) as ConfigDocument | null;
+  const policy: ActivityXPPolicyItem = config?.activityXPPolicy?.[type] || { enabled: true, minXP: 1, maxXP: 100, multiplier: 1.0, cooldownSec: 60 };
   if (!policy.enabled) {
     return { success: false, reason: "XP 지급 비활성화" };
   }
@@ -55,7 +89,7 @@ export async function grantXP({ discordId, guildId, type, baseXP, channelId, req
   let todayXP = 0;
   if (levelDoc && Array.isArray(levelDoc.xpHistory)) {
     todayXP = levelDoc.xpHistory
-      .filter((h: LevelHistory) => h.date && new Date(h.date) >= today)
+      .filter((h: LevelHistory) => h.date && h.date >= today)
       .reduce((sum: number, h: LevelHistory) => sum + h.amount, 0);
   }
   if (policy.dailyCap > 0 && todayXP >= policy.dailyCap) {

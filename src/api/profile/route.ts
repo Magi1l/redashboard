@@ -8,6 +8,32 @@ import { recordMetric } from "@/lib/monitoring/metrics";
 import { log } from "@/lib/logging/logger";
 import { measureDbQuery } from "@/lib/monitoring/performance";
 
+// User, Level, Purchase lean 타입 명확화
+interface UserLean {
+  discordId: string;
+  username?: string;
+  avatar?: string;
+  servers?: string[];
+  points?: number;
+  purchases?: string[];
+  profileBackground?: string;
+}
+interface LevelLean {
+  userId: string;
+  guildId: string;
+  xp: number;
+  level: number;
+  lastMessage: Date;
+  xpHistory: { date: Date; amount: number }[];
+}
+interface PurchaseLean {
+  userId: string;
+  itemId: string;
+  guildId: string;
+  purchasedAt: Date;
+  quantity: number;
+}
+
 export async function GET(req: NextRequest) {
   const endpoint = "/api/profile";
   const start = Date.now();
@@ -25,12 +51,9 @@ export async function GET(req: NextRequest) {
       log.warn("필수 파라미터 누락", { discordId, guildId });
       return NextResponse.json(errorResponse({ code: "BE4001", message: errorMsg }, 400), { status });
     }
-    // @ts-ignore
-    const user = await measureDbQuery("User.findOne", () => (User as any).findOne({ discordId }).lean());
-    // @ts-ignore
-    const level = await measureDbQuery("Level.findOne", () => (Level as any).findOne({ userId: discordId, guildId }).lean());
-    // @ts-ignore
-    const purchases = await measureDbQuery("Purchase.find", () => (Purchase as any).find({ userId: discordId, guildId }).lean());
+    const user = await measureDbQuery("User.findOne", () => (User as any).findOne({ discordId }).lean()) as UserLean | null;
+    const level = await measureDbQuery("Level.findOne", () => (Level as any).findOne({ userId: discordId, guildId }).lean()) as LevelLean | null;
+    const purchases = await measureDbQuery("Purchase.find", () => (Purchase as any).find({ userId: discordId, guildId }).lean()) as PurchaseLean[];
     log.info("프로필 데이터 조회 성공", { discordId, guildId });
     return NextResponse.json({ user, level, purchases });
   } catch (err: any) {

@@ -3,7 +3,18 @@ import { connectDB } from "@/lib/mongodb";
 import UserDefault from "@/lib/models/User";
 import mongoose from "mongoose";
 
-const User = UserDefault as mongoose.Model<any>;
+// UserDocument 타입 명확화
+interface UserDocument extends mongoose.Document {
+  discordId: string;
+  username?: string;
+  avatar?: string;
+  servers?: string[];
+  points: number;
+  purchases?: string[];
+  profileBackground?: string;
+}
+
+const User = UserDefault as mongoose.Model<UserDocument>;
 
 export async function POST(req: NextRequest) {
   await connectDB();

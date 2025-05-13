@@ -4,6 +4,18 @@ import { authOptions } from "@/api/auth/[...nextauth]/route";
 
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
+// Discord API 채널 타입 명확화
+interface ChannelRaw {
+  id: string;
+  name: string;
+  type: number;
+}
+interface Channel {
+  channelId: string;
+  name: string;
+  type: "text" | "voice";
+}
+
 export async function GET(req: NextRequest) {
   const session = await getServerSession({ req, ...authOptions });
   if (!session) {
@@ -24,12 +36,12 @@ export async function GET(req: NextRequest) {
   if (!res.ok) {
     return NextResponse.json({ error: "Failed to fetch channels from Discord API" }, { status: 500 });
   }
-  const channels = await res.json();
+  const channels: ChannelRaw[] = await res.json();
   // 필요한 정보만 추출
-  const result = channels.map((ch: any) => ({
+  const result: Channel[] = channels.map((ch: ChannelRaw) => ({
     channelId: ch.id,
     name: ch.name,
-    type: ch.type === 2 ? "voice" : "text", // Discord API: 2=voice, 0=text 등
+    type: ch.type === 2 ? "voice" : "text",
   }));
   return NextResponse.json({ channels: result });
 } 

@@ -14,11 +14,11 @@ export class ApiError extends Error {
 }
 
 // 표준 에러 핸들러 래퍼
-export function withError(handler: (req: NextApiRequest, res: NextApiResponse) => Promise<any> | any) {
+export function withError(handler: (req: NextApiRequest, res: NextApiResponse) => Promise<unknown> | unknown) {
   return async (req: NextApiRequest, res: NextApiResponse) => {
     try {
       await handler(req, res);
-    } catch (err: any) {
+    } catch (err: unknown) {
       const isDev = process.env.NODE_ENV === 'development';
       let status = 500;
       let code = 'BE1000';

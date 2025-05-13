@@ -15,7 +15,7 @@ function shouldLog(level: LogLevel) {
   return true; // dev: 모두 출력
 }
 
-export function logger(level: LogLevel, message: string, context?: Record<string, any>) {
+export function logger(level: LogLevel, message: string, context?: Record<string, unknown>) {
   if (!shouldLog(level)) return;
   const ts = new Date().toISOString();
   const color = LEVEL_COLORS[level] || "";
@@ -25,8 +25,8 @@ export function logger(level: LogLevel, message: string, context?: Record<string
 }
 
 export const log = {
-  error: (msg: string, ctx?: Record<string, any>) => logger("error", msg, ctx),
-  warn: (msg: string, ctx?: Record<string, any>) => logger("warn", msg, ctx),
-  info: (msg: string, ctx?: Record<string, any>) => logger("info", msg, ctx),
-  debug: (msg: string, ctx?: Record<string, any>) => logger("debug", msg, ctx),
+  error: (msg: string, ctx?: Record<string, unknown>) => logger("error", msg, ctx),
+  warn: (msg: string, ctx?: Record<string, unknown>) => logger("warn", msg, ctx),
+  info: (msg: string, ctx?: Record<string, unknown>) => logger("info", msg, ctx),
+  debug: (msg: string, ctx?: Record<string, unknown>) => logger("debug", msg, ctx),
 }; 

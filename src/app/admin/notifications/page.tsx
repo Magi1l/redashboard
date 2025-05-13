@@ -1,14 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
 
-const defaultNotifications = {
+// 알림 설정 타입 명확화
+interface NotificationSettings {
+  levelUp: boolean;
+  reward: boolean;
+  system: boolean;
+}
+
+const defaultNotifications: NotificationSettings = {
   levelUp: true,
   reward: true,
   system: true,
 };
 
 export default function AdminNotificationsPage() {
-  const [notifications, setNotifications] = useState(defaultNotifications);
+  const [notifications, setNotifications] = useState<NotificationSettings>(defaultNotifications);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 

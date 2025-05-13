@@ -1,8 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
 
+// User 타입 명확화
+interface User {
+  discordId: string;
+  username?: string;
+  points?: number;
+}
+
 export default function AdminUserPage() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
 

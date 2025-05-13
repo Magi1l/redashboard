@@ -1,7 +1,50 @@
 "use client";
 import { useEffect, useState } from "react";
 
-// 토스트 컴포넌트 간단 추가
+interface Server {
+  id: string;
+  name: string;
+}
+interface Channel {
+  channelId: string;
+  name: string;
+  type: string;
+}
+interface Role {
+  id: string;
+  name: string;
+}
+interface ChannelXPSetting {
+  channelId: string;
+  type: string;
+  multiplier: number;
+  enabled: boolean;
+}
+interface VoiceXPSetting {
+  multiplier: number;
+  requireMic: boolean;
+}
+interface ActivityXPSetting {
+  message: number;
+  voice: number;
+}
+interface ActivityXPPolicyItem {
+  enabled: boolean;
+  minXP: number;
+  maxXP: number;
+  multiplier: number;
+  cooldownSec: number;
+  requireMic?: boolean;
+  dailyCap?: number;
+}
+interface ActivityXPPolicy {
+  message: ActivityXPPolicyItem;
+  voice: ActivityXPPolicyItem;
+  reaction: ActivityXPPolicyItem;
+  command: ActivityXPPolicyItem;
+}
+
+// Toast 컴포넌트 분리
 function Toast({ message, type, onClose }: { message: string; type: 'success' | 'error'; onClose: () => void }) {
   if (!message) return null;
   return (
@@ -15,16 +58,55 @@ function Toast({ message, type, onClose }: { message: string; type: 'success' | 
   );
 }
 
+// XP 정책 입력 섹션 분리
+function XPPolicySection({
+  policyKey,
+  label,
+  policy,
+  setPolicy,
+  extra
+}: {
+  policyKey: keyof ActivityXPPolicy;
+  label: string;
+  policy: ActivityXPPolicyItem;
+  setPolicy: (key: keyof ActivityXPPolicy, value: Partial<ActivityXPPolicyItem>) => void;
+  extra?: React.ReactNode;
+}) {
+  return (
+    <div className="border rounded p-4 mb-4 bg-gray-50">
+      <h3 className="font-semibold mb-2">{label}</h3>
+      <div className="flex flex-wrap gap-4 items-center">
+        <label className="flex items-center gap-2">
+          <input type="checkbox" checked={policy.enabled} onChange={e => setPolicy(policyKey, { enabled: e.target.checked })} />활성화
+        </label>
+        <label>최소 XP
+          <input type="number" min={0} value={policy.minXP} onChange={e => setPolicy(policyKey, { minXP: Number(e.target.value) })} className="border p-1 rounded w-20 ml-2" />
+        </label>
+        <label>최대 XP
+          <input type="number" min={0} value={policy.maxXP} onChange={e => setPolicy(policyKey, { maxXP: Number(e.target.value) })} className="border p-1 rounded w-20 ml-2" />
+        </label>
+        <label>배율
+          <input type="number" step={0.1} min={0.1} value={policy.multiplier} onChange={e => setPolicy(policyKey, { multiplier: Number(e.target.value) })} className="border p-1 rounded w-20 ml-2" />
+        </label>
+        <label>쿨타임(초)
+          <input type="number" min={0} value={policy.cooldownSec} onChange={e => setPolicy(policyKey, { cooldownSec: Number(e.target.value) })} className="border p-1 rounded w-20 ml-2" />
+        </label>
+        {extra}
+      </div>
+    </div>
+  );
+}
+
 export default function AdminXPPage() {
-  const [servers, setServers] = useState<any[]>([]);
+  const [servers, setServers] = useState<Server[]>([]);
   const [selectedServer, setSelectedServer] = useState<string>("");
-  const [channels, setChannels] = useState<any[]>([]);
+  const [channels, setChannels] = useState<Channel[]>([]);
   const [baseXP, setBaseXP] = useState(10);
   const [multiplier, setMultiplier] = useState(1.0);
-  const [channelXPSettings, setChannelXPSettings] = useState<any[]>([]);
-  const [voiceXPSettings, setVoiceXPSettings] = useState({ multiplier: 1.0, requireMic: false });
-  const [activityXPSettings, setActivityXPSettings] = useState({ message: 1.0, voice: 1.0 });
-  const [activityXPPolicy, setActivityXPPolicy] = useState<any>({
+  const [channelXPSettings, setChannelXPSettings] = useState<ChannelXPSetting[]>([]);
+  const [voiceXPSettings, setVoiceXPSettings] = useState<VoiceXPSetting>({ multiplier: 1.0, requireMic: false });
+  const [activityXPSettings, setActivityXPSettings] = useState<ActivityXPSetting>({ message: 1.0, voice: 1.0 });
+  const [activityXPPolicy, setActivityXPPolicy] = useState<ActivityXPPolicy>({
     message: { enabled: true, minXP: 1, maxXP: 100, multiplier: 1.0, cooldownSec: 60 },
     voice: { enabled: true, minXP: 1, maxXP: 100, multiplier: 1.0, cooldownSec: 60, requireMic: false },
     reaction: { enabled: true, minXP: 1, maxXP: 100, multiplier: 1.0, cooldownSec: 60 },
@@ -38,7 +120,7 @@ export default function AdminXPPage() {
   const [activityError, setActivityError] = useState<{ message?: string; voice?: string }>({});
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null);
   const [roleRewards, setRoleRewards] = useState<{ level: number; roleId: string }[]>([]);
-  const [roles, setRoles] = useState<any[]>([]);
+  const [roles, setRoles] = useState<Role[]>([]);
   const [roleRewardErrors, setRoleRewardErrors] = useState<string[]>([]);
 
   // 서버 목록 불러오기
@@ -94,7 +176,7 @@ export default function AdminXPPage() {
   useEffect(() => {
     // 채널별 multiplier 검사
     const errs: { [key: string]: string } = {};
-    channelXPSettings.forEach((c: any) => {
+    channelXPSettings.forEach((c: ChannelXPSetting) => {
       if (c.multiplier <= 0) errs[c.channelId] = "0보다 커야 합니다";
     });
     setChannelErrors(errs);
@@ -118,10 +200,10 @@ export default function AdminXPPage() {
   // 채널별 설정 핸들러
   const handleChannelSetting = (channelId: string, field: string, value: any) => {
     setChannelXPSettings((prev) => {
-      const idx = prev.findIndex((c: any) => c.channelId === channelId);
+      const idx = prev.findIndex((c: ChannelXPSetting) => c.channelId === channelId);
       if (idx === -1) {
         // 새로 추가
-        const ch = channels.find((c: any) => c.channelId === channelId);
+        const ch = channels.find((c: Channel) => c.channelId === channelId);
         return [
           ...prev,
           { channelId, type: ch?.type || "text", multiplier: 1.0, enabled: true, [field]: value },
@@ -178,34 +260,6 @@ export default function AdminXPPage() {
     setLoading(false);
   };
 
-  // activityXPPolicy 입력 폼 렌더링 함수
-  const renderXPPolicySection = (key: string, label: string, extra?: React.ReactNode) => {
-    const policy = activityXPPolicy[key] || {};
-    return (
-      <div className="border rounded p-4 mb-4 bg-gray-50">
-        <h3 className="font-semibold mb-2">{label}</h3>
-        <div className="flex flex-wrap gap-4 items-center">
-          <label className="flex items-center gap-2">
-            <input type="checkbox" checked={policy.enabled} onChange={e => setActivityXPPolicy((p: any) => ({ ...p, [key]: { ...policy, enabled: e.target.checked } }))} />활성화
-          </label>
-          <label>최소 XP
-            <input type="number" min={0} value={policy.minXP} onChange={e => setActivityXPPolicy((p: any) => ({ ...p, [key]: { ...policy, minXP: Number(e.target.value) } }))} className="border p-1 rounded w-20 ml-2" />
-          </label>
-          <label>최대 XP
-            <input type="number" min={0} value={policy.maxXP} onChange={e => setActivityXPPolicy((p: any) => ({ ...p, [key]: { ...policy, maxXP: Number(e.target.value) } }))} className="border p-1 rounded w-20 ml-2" />
-          </label>
-          <label>배율
-            <input type="number" step={0.1} min={0.1} value={policy.multiplier} onChange={e => setActivityXPPolicy((p: any) => ({ ...p, [key]: { ...policy, multiplier: Number(e.target.value) } }))} className="border p-1 rounded w-20 ml-2" />
-          </label>
-          <label>쿨타임(초)
-            <input type="number" min={0} value={policy.cooldownSec} onChange={e => setActivityXPPolicy((p: any) => ({ ...p, [key]: { ...policy, cooldownSec: Number(e.target.value) } }))} className="border p-1 rounded w-20 ml-2" />
-          </label>
-          {extra}
-        </div>
-      </div>
-    );
-  };
-
   return (
     <div>
       <Toast message={toast?.message || ""} type={toast?.type || 'success'} onClose={() => setToast(null)} />
@@ -220,7 +274,7 @@ export default function AdminXPPage() {
           disabled={loading}
         >
           <option value="">서버를 선택하세요</option>
-          {servers.map((s: any) => (
+          {servers.map((s: Server) => (
             <option key={s.id} value={s.id}>
               {s.name}
             </option>
@@ -270,8 +324,8 @@ export default function AdminXPPage() {
               </tr>
             </thead>
             <tbody>
-              {channels.map((ch: any) => {
-                const setting = channelXPSettings.find((c: any) => c.channelId === ch.channelId) || { enabled: true, multiplier: 1.0 };
+              {channels.map((ch: Channel) => {
+                const setting = channelXPSettings.find((c: ChannelXPSetting) => c.channelId === ch.channelId) || { enabled: true, multiplier: 1.0 };
                 return (
                   <tr key={ch.channelId} className="border-t">
                     <td className="p-2">{ch.name}</td>
@@ -394,7 +448,7 @@ export default function AdminXPPage() {
                     disabled={loading}
                   >
                     <option value="">역할 선택</option>
-                    {roles.map((role: any) => (
+                    {roles.map((role: Role) => (
                       <option key={role.id} value={role.id}>{role.name}</option>
                     ))}
                   </select>
@@ -419,14 +473,35 @@ export default function AdminXPPage() {
           disabled={loading}
         >+ 보상 추가</button>
       </div>
-      {renderXPPolicySection("message", "메시지 XP 정책")}
-      {renderXPPolicySection("voice", "음성 XP 정책", (
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={activityXPPolicy.voice?.requireMic} onChange={e => setActivityXPPolicy((p: any) => ({ ...p, voice: { ...p.voice, requireMic: e.target.checked } }))} />마이크 필요
-        </label>
-      ))}
-      {renderXPPolicySection("reaction", "리액션 XP 정책")}
-      {renderXPPolicySection("command", "커맨드 XP 정책")}
+      {XPPolicySection({
+        policyKey: "message",
+        label: "메시지 XP 정책",
+        policy: activityXPPolicy.message,
+        setPolicy: (key, value) => setActivityXPPolicy((p) => ({ ...p, [key]: { ...p[key], ...value } } as ActivityXPPolicy))
+      })}
+      {XPPolicySection({
+        policyKey: "voice",
+        label: "음성 XP 정책",
+        policy: activityXPPolicy.voice,
+        setPolicy: (key, value) => setActivityXPPolicy((p) => ({ ...p, [key]: { ...p[key], ...value } } as ActivityXPPolicy)),
+        extra: (
+          <label className="flex items-center gap-2">
+            <input type="checkbox" checked={activityXPPolicy.voice?.requireMic} onChange={e => setActivityXPPolicy((p) => ({ ...p, voice: { ...p.voice, requireMic: e.target.checked } } as ActivityXPPolicy))} />마이크 필요
+          </label>
+        )
+      })}
+      {XPPolicySection({
+        policyKey: "reaction",
+        label: "리액션 XP 정책",
+        policy: activityXPPolicy.reaction,
+        setPolicy: (key, value) => setActivityXPPolicy((p) => ({ ...p, [key]: { ...p[key], ...value } } as ActivityXPPolicy))
+      })}
+      {XPPolicySection({
+        policyKey: "command",
+        label: "커맨드 XP 정책",
+        policy: activityXPPolicy.command,
+        setPolicy: (key, value) => setActivityXPPolicy((p) => ({ ...p, [key]: { ...p[key], ...value } } as ActivityXPPolicy))
+      })}
       <button
         onClick={handleSave}
         disabled={loading || !!baseXPError || !!multiplierError || Object.values(channelErrors).length > 0 || !!activityError.message || !!activityError.voice || roleRewardErrors.some((e) => !!e)}
