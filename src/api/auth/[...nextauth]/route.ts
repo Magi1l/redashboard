@@ -6,7 +6,7 @@ import type { Session } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 
 // 커스텀 Session 타입 확장
-interface CustomSession extends Session {
+export interface CustomSession extends Session {
   user: Session["user"] & { id?: string };
 }
 

@@ -2,7 +2,8 @@ import NextAuth, { Session } from "next-auth";
 import { User as NextAuthUser } from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import { connectDB } from "./mongodb";
+import client from "./mongodbClient";
+import type { CustomSession } from "@/api/auth/[...nextauth]/route";
 
 export const authOptions = {
   providers: [
@@ -11,11 +12,11 @@ export const authOptions = {
       clientSecret: process.env.DISCORD_CLIENT_SECRET!,
     }),
   ],
-  adapter: MongoDBAdapter(connectDB),
+  adapter: MongoDBAdapter(client),
   callbacks: {
     async session({ session, user }: { session: Session; user: NextAuthUser }) {
       if (session.user && user && "id" in user) {
-        (session.user as any).id = (user as any).id;
+        (session as CustomSession).user.id = (user as { id: string }).id;
       }
       return session;
     },
