@@ -1,0 +1,41 @@
+name: Deploy to Vercel
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci --legacy-peer-deps
+
+      - name: Build Next.js app
+        run: npm run build --workspace=web
+
+      - name: Deploy to Vercel
+        uses: amondnet/vercel-action@v25
+        with:
+          vercel-token: ${{ secrets.VERCEL_TOKEN }}
+          vercel-org-id: ${{ secrets.VERCEL_ORG_ID }}
+          vercel-project-id: ${{ secrets.VERCEL_PROJECT_ID }}
+          working-directory: ./web
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
+          DISCORD_CLIENT_SECRET: ${{ secrets.DISCORD_CLIENT_SECRET }}
+
+# 환경변수(Secrets)는 GitHub 또는 Vercel 프로젝트 설정에서 반드시 등록해야 함
+# VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID는 Vercel 대시보드에서 확인 가능
+# MONGODB_URI, DISCORD_CLIENT_ID, DISCORD_CLIENT_SECRET 등은 민감정보이므로 코드에 직접 포함하지 말 것 

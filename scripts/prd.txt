@@ -1,0 +1,41 @@
+# Overview
+Discord 레벨 시스템을 활용한 커스텀 대시보드 서비스. 유저가 디스코드 봇을 통해 경험치, 레벨, 포인트, 프로필 커스텀, 상점, 랭킹 등 다양한 기능을 시각적으로 관리할 수 있도록 한다. Mee6 대시보드(https://mee6.xyz/en)와 유사한 UX를 제공하며, 서버별 랭킹, 프로필 커스텀, 상점, 봇 명령어 연동 등 차별화된 기능을 포함한다.
+
+# Core Features
+- 디스코드 로그인 및 봇 초대(권한 체크, 초대 링크: https://discord.com/oauth2/authorize?client_id=1367490804700020777&permissions=8&integration_type=0&scope=bot+applications.commands)
+- 로그인 후 서버 선택(유저가 관리자인 서버만 표시, 봇 미초대 서버는 초대 링크 연결)
+- 대시보드(랭킹, 프로필, 상점, 서버별 레벨 등)
+- 프로필 카드(아바타, 경험치 바, 랭크, 레벨, 커스텀 배경/컬러)
+- 상점(관리자가 배경 등 상품 등록, 유저가 포인트로 구매)
+- 서버별 레벨 랭킹(1~3등 단상, 그 외는 카드형 리스트)
+- 프로필 카드 봇 명령어 연동
+- 전체 컬러: 디스코드 회색+노란색 포인트
+
+# User Experience
+- 주요 유저: 디스코드 서버 관리자, 일반 유저
+- 플로우: 로그인 → 서버 선택 → 대시보드(랭킹/상점/프로필) → 프로필 커스텀/구매/랭킹 확인
+- UI: Mee6 대시보드 참고, 프로필 카드(아바타/경험치/레벨/랭크/배경), 상점(썸네일, 구매/등록)
+
+# Technical Architecture
+- Next.js(프론트), Node.js(백엔드), Discord OAuth2, MongoDB(유저/서버/레벨/상점/구매 내역)
+- Vercel 배포, GitHub Actions로 main 브랜치 자동 배포
+- 디스코드 봇 API 연동(레벨/포인트/명령어)
+- 이미지 업로드(프로필 배경 등), S3 또는 Vercel Storage
+
+# Development Roadmap
+- MVP: 로그인/서버선택/대시보드/랭킹/프로필/상점/구매/봇 명령어 연동
+- 향후: 알림, 커뮤니티, 추가 커스텀, 모바일 대응 등
+
+# Logical Dependency Chain
+1. 로그인/봇 초대 → 2. 서버 선택 → 3. 대시보드 기본 UI → 4. 랭킹/프로필/상점 → 5. 프로필 커스텀/상점 구매 → 6. 봇 명령어 연동
+
+# Risks and Mitigations
+- 디스코드 API 변경: 공식 문서 모니터링, 버전 관리
+- 이미지 업로드 보안: 파일 확장자/용량 제한, S3 권한 관리
+- 데이터 동기화: 주기적 동기화, 에러 로깅
+
+# Appendix
+- Mee6 대시보드 참고: https://mee6.xyz/en
+- 깃허브: https://github.com/Magi1l/redashboard.git
+- 배포: Vercel
+- 관리자: Magi1l(456jkl632@gmail.com) 
