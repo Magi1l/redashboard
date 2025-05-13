@@ -16,7 +16,7 @@ export type AlertEvent = {
 export const alertHistory: AlertEvent[] = [];
 const ALERT_HISTORY_LIMIT = 50;
 
-export async function sendSlackAlert(message: string, options?: Record<string, any>) {
+export async function sendSlackAlert(message: string, options?: Record<string, unknown>) {
   if (!SLACK_WEBHOOK_URL) {
     log.warn("SLACK_WEBHOOK_URL 미설정, 슬랙 알림 전송 생략", { message });
     return;
@@ -29,14 +29,15 @@ export async function sendSlackAlert(message: string, options?: Record<string, a
     });
     log.info("슬랙 알림 전송 완료", { message });
     alertHistory.unshift({ type: "slack", channel: "slack", message, payload: options, at: Date.now(), status: "success" });
-  } catch (err: any) {
-    log.error("슬랙 알림 전송 실패", { error: err?.message });
-    alertHistory.unshift({ type: "slack", channel: "slack", message, payload: options, at: Date.now(), status: "fail", error: err?.message });
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    log.error("슬랙 알림 전송 실패", { error: errorMsg });
+    alertHistory.unshift({ type: "slack", channel: "slack", message, payload: options, at: Date.now(), status: "fail", error: errorMsg });
   }
   if (alertHistory.length > ALERT_HISTORY_LIMIT) alertHistory.length = ALERT_HISTORY_LIMIT;
 }
 
-export async function sendWebhookAlert(payload: any) {
+export async function sendWebhookAlert(payload: Record<string, unknown>) {
   if (!ALERT_WEBHOOK_URL) {
     log.warn("ALERT_WEBHOOK_URL 미설정, 웹훅 알림 전송 생략", { payload });
     return;
@@ -49,9 +50,10 @@ export async function sendWebhookAlert(payload: any) {
     });
     log.info("웹훅 알림 전송 완료", { payload });
     alertHistory.unshift({ type: "webhook", channel: "webhook", message: JSON.stringify(payload), payload, at: Date.now(), status: "success" });
-  } catch (err: any) {
-    log.error("웹훅 알림 전송 실패", { error: err?.message });
-    alertHistory.unshift({ type: "webhook", channel: "webhook", message: JSON.stringify(payload), payload, at: Date.now(), status: "fail", error: err?.message });
+  } catch (err) {
+    const errorMsg = err instanceof Error ? err.message : String(err);
+    log.error("웹훅 알림 전송 실패", { error: errorMsg });
+    alertHistory.unshift({ type: "webhook", channel: "webhook", message: JSON.stringify(payload), payload, at: Date.now(), status: "fail", error: errorMsg });
   }
   if (alertHistory.length > ALERT_HISTORY_LIMIT) alertHistory.length = ALERT_HISTORY_LIMIT;
 } 

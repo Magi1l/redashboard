@@ -1,6 +1,7 @@
 import LevelDefault, { LevelDocument, LevelHistory } from "@/lib/models/Level";
-import Config from "@/lib/models/Config";
+import Config, { ConfigDocument } from "@/lib/models/Config";
 import mongoose from "mongoose";
+import redis from "@/lib/redis";
 
 const Level = LevelDefault;
 
@@ -21,9 +22,6 @@ type GrantXPParams = {
   channelId?: string;
   requireMic?: boolean;
 };
-
-// (임시) 쿨타임 체크용 in-memory map (실서비스는 Redis 등 외부 캐시 권장)
-const xpCooldownMap: Record<string, number> = {};
 
 // activityXPPolicy 타입 명확화
 interface ActivityXPPolicyItem {
@@ -50,15 +48,6 @@ interface GrantXPResult {
   user?: LevelDocument | null;
 }
 
-// ConfigDocument 타입 명확화 (임시)
-interface ConfigDocument {
-  key: string;
-  baseXP?: number;
-  multiplier?: number;
-  activityXPPolicy?: ActivityXPPolicy;
-  // ...필요시 추가 필드...
-}
-
 export async function grantXP({ discordId, guildId, type, baseXP, channelId, requireMic }: GrantXPParams): Promise<GrantXPResult> {
   // 1. 정책 조회
   const config = await Config.findOne({ key: `xp:${guildId}` }) as ConfigDocument | null;
@@ -66,10 +55,11 @@ export async function grantXP({ discordId, guildId, type, baseXP, channelId, req
   if (!policy.enabled) {
     return { success: false, reason: "XP 지급 비활성화" };
   }
-  // 2. 쿨타임 체크
-  const cooldownKey = `${guildId}:${discordId}:${type}` + (channelId ? `:${channelId}` : "");
+  // 2. 쿨타임 체크 (Redis 기반)
+  const cooldownKey = `xp:cooldown:${guildId}:${discordId}:${type}${channelId ? `:${channelId}` : ""}`;
   const now = Date.now();
-  if (policy.cooldownSec > 0 && xpCooldownMap[cooldownKey] && now - xpCooldownMap[cooldownKey] < policy.cooldownSec * 1000) {
+  const lastXP = await redis.get(cooldownKey);
+  if (policy.cooldownSec > 0 && lastXP && now - Number(lastXP) < policy.cooldownSec * 1000) {
     return { success: false, reason: "쿨타임 미충족" };
   }
   // 3. requireMic(voice) 체크
@@ -86,7 +76,7 @@ export async function grantXP({ discordId, guildId, type, baseXP, channelId, req
   // 5. 일일 상한 체크 및 지급량 조정
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const levelDoc: LevelDocument | null = await (Level as mongoose.Model<any>).findOne({ userId: discordId, guildId });
+  const levelDoc: LevelDocument | null = await Level.findOne({ userId: discordId, guildId });
   let todayXP = 0;
   if (levelDoc && Array.isArray(levelDoc.xpHistory)) {
     todayXP = levelDoc.xpHistory
@@ -111,6 +101,7 @@ export async function grantXP({ discordId, guildId, type, baseXP, channelId, req
     },
     { new: true, upsert: true }
   );
-  xpCooldownMap[cooldownKey] = now;
+  // 쿨타임 갱신 (Redis)
+  await redis.set(cooldownKey, now.toString(), "PX", policy.cooldownSec * 1000);
   return { success: true, xp, user: updated };
 } 

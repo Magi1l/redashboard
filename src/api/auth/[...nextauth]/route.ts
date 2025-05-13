@@ -5,6 +5,11 @@ import { connectDB } from "@/lib/mongodb";
 import type { Session } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 
+// 커스텀 Session 타입 확장
+interface CustomSession extends Session {
+  user: Session["user"] & { id?: string };
+}
+
 export const authOptions = {
   providers: [
     DiscordProvider({
@@ -17,7 +22,7 @@ export const authOptions = {
   session: { strategy: "jwt" as const },
   callbacks: {
     async session({ session, token }: { session: Session; token: JWT }) {
-      (session.user as any).id = token.sub;
+      (session as CustomSession).user.id = token.sub;
       return session;
     },
   },

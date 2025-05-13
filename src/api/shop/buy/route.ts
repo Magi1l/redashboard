@@ -6,31 +6,56 @@ import PurchaseDefault from "@/lib/models/Purchase";
 import { sendSlackAlert } from "@/lib/monitoring/alert";
 import mongoose from "mongoose";
 
-const User = UserDefault as mongoose.Model<any>;
-const ShopItem = ShopItemDefault as mongoose.Model<any>;
-const Purchase = PurchaseDefault as mongoose.Model<any>;
+// User 타입 명확화
+interface UserDoc extends mongoose.Document {
+  discordId: string;
+  username?: string;
+  avatar?: string;
+  servers?: string[];
+  points: number;
+  purchases?: string[];
+  profileBackground?: string;
+}
+// ShopItem 타입 명확화
+interface ShopItemDoc extends mongoose.Document {
+  name: string;
+  description?: string;
+  price: number;
+  image?: string;
+  type: string;
+  stock?: number;
+  createdAt?: Date;
+}
+// Purchase 타입 명확화
+interface PurchaseDoc extends mongoose.Document {
+  userId: string;
+  itemId: string;
+  guildId: string;
+  purchasedAt: Date;
+  quantity: number;
+}
+
+const User = UserDefault as mongoose.Model<UserDoc>;
+const ShopItem = ShopItemDefault as mongoose.Model<ShopItemDoc>;
+const Purchase = PurchaseDefault as mongoose.Model<PurchaseDoc>;
 
 export async function POST(req: NextRequest) {
   await connectDB();
   const session = await mongoose.startSession();
   let lowStock = false;
-  let discordId: string, itemId: string, guildId: string | undefined;
   try {
     const body = await req.json();
-    discordId = body.discordId;
-    itemId = body.itemId;
-    guildId = body.guildId;
     await session.withTransaction(async () => {
-      if (!discordId || !itemId) {
+      if (!body.discordId || !body.itemId) {
         throw new Error("필수 정보 누락");
       }
       // 트랜잭션 내에서 모델 조회
-      const user = await User.findOne({ discordId }).session(session);
-      const item = await ShopItem.findById(itemId).session(session);
+      const user = await User.findOne({ discordId: body.discordId }).session(session);
+      const item = await ShopItem.findById(body.itemId).session(session);
       if (!user || !item) {
         throw new Error("유저 또는 아이템을 찾을 수 없음");
       }
-      const alreadyOwned = await Purchase.findOne({ itemId, userId: discordId }).session(session);
+      const alreadyOwned = await Purchase.findOne({ itemId: body.itemId, userId: body.discordId }).session(session);
       if (alreadyOwned) {
         throw new Error("이미 소유한 아이템입니다.");
       }
@@ -47,18 +72,18 @@ export async function POST(req: NextRequest) {
         await item.save({ session });
         if (item.stock <= 3) lowStock = true;
       }
-      const purchase = new Purchase({ userId: discordId, itemId, guildId: guildId || null, quantity: 1 });
+      const purchase = new Purchase({ userId: body.discordId, itemId: body.itemId, guildId: body.guildId || null, quantity: 1 });
       await purchase.save({ session });
     });
     session.endSession();
     // 트랜잭션 성공 후 부수효과(슬랙 알림 등)
     if (lowStock) {
-      const item = await ShopItem.findById(itemId);
-      const user = await User.findOne({ discordId });
+      const item = await ShopItem.findById(body.itemId);
+      const user = await User.findOne({ discordId: body.discordId });
       sendSlackAlert(`상점 재고 임박: ${item?.name} (ID: ${item?._id})\n남은 재고: ${item?.stock}\n구매자: ${user?.username || user?.discordId}`);
     }
     // 트랜잭션 성공 시 포인트 반환
-    const user = await User.findOne({ discordId });
+    const user = await User.findOne({ discordId: body.discordId });
     return NextResponse.json({ success: true, points: user?.points });
   } catch (err: any) {
     session.endSession();

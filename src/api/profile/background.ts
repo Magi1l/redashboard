@@ -4,7 +4,13 @@ import mongoose from "mongoose";
 import UserDefault from "../../lib/models/User";
 import { errorResponse } from "../../lib/middleware/errorResponse";
 
-const User = UserDefault as mongoose.Model<any>;
+// User 타입 명확화
+interface UserDoc extends mongoose.Document {
+  discordId: string;
+  profileBackground?: string;
+}
+
+const User = UserDefault as mongoose.Model<UserDoc>;
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== "POST") {

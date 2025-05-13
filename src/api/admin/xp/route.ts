@@ -3,6 +3,25 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/api/auth/[...nextauth]/route";
 import Config from "@/lib/models/Config";
 import { connectDB } from "@/lib/mongodb";
+import LevelDefault from "@/lib/models/Level";
+import UserDefault from "@/lib/models/User";
+import mongoose from "mongoose";
+
+// Level 타입 명확화
+interface LevelDoc extends mongoose.Document {
+  userId: string;
+  guildId: string;
+  level: number;
+  xp: number;
+}
+// User 타입 명확화
+interface UserDoc extends mongoose.Document {
+  discordId: string;
+  points: number;
+}
+
+const Level = LevelDefault as mongoose.Model<LevelDoc>;
+const User = UserDefault as mongoose.Model<UserDoc>;
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession({ req, ...authOptions });
@@ -10,21 +29,14 @@ export async function GET(req: NextRequest) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
   const { searchParams } = new URL(req.url);
+  const userId = searchParams.get("userId");
   const guildId = searchParams.get("guildId");
-  if (!guildId) {
-    return NextResponse.json({ error: "guildId required" }, { status: 400 });
+  if (!userId || !guildId) {
+    return NextResponse.json({ error: "userId, guildId required" }, { status: 400 });
   }
   await connectDB();
-  const config = await (Config as any).findOne({ key: `xp:${guildId}` });
-  return NextResponse.json({
-    baseXP: config?.baseXP ?? 10,
-    multiplier: config?.multiplier ?? 1.0,
-    channelXPSettings: config?.channelXPSettings ?? [],
-    voiceXPSettings: config?.voiceXPSettings ?? { multiplier: 1.0, requireMic: false },
-    activityXPSettings: config?.activityXPSettings ?? { message: 1.0, voice: 1.0 },
-    activityXPPolicy: config?.activityXPPolicy ?? {},
-    roleRewards: config?.roleRewards ?? [],
-  });
+  const level = await Level.findOne({ userId, guildId }).lean();
+  return NextResponse.json(level);
 }
 
 export async function POST(req: NextRequest) {
@@ -33,14 +45,14 @@ export async function POST(req: NextRequest) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
   await connectDB();
-  const { guildId, baseXP, multiplier, channelXPSettings, voiceXPSettings, activityXPSettings, activityXPPolicy, roleRewards } = await req.json();
-  if (!guildId) {
-    return NextResponse.json({ error: "guildId required" }, { status: 400 });
+  const { userId, guildId, xp, level } = await req.json();
+  if (!userId || !guildId) {
+    return NextResponse.json({ error: "userId, guildId required" }, { status: 400 });
   }
-  await (Config as any).findOneAndUpdate(
-    { key: `xp:${guildId}` },
-    { $set: { baseXP, multiplier, channelXPSettings, voiceXPSettings, activityXPSettings, activityXPPolicy, roleRewards } },
-    { upsert: true }
+  const updated = await Level.findOneAndUpdate(
+    { userId, guildId },
+    { $set: { xp, level } },
+    { new: true, upsert: true }
   );
-  return NextResponse.json({ ok: true });
+  return NextResponse.json(updated);
 } 

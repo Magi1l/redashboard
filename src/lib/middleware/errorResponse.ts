@@ -2,6 +2,7 @@ import { getErrorMessage } from "../errors/messages";
 
 export function errorResponse(error: unknown, status: number = 500, lang: "ko" | "en" = "ko") {
   const isDev = process.env.NODE_ENV === "development";
+  // let code, message, detail 모두 에러 핸들링 흐름상 재할당 필요하므로 let 유지
   let code = "BE1000";
   let message = getErrorMessage(code, lang);
   let detail: string | undefined = undefined;

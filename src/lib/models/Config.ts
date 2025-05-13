@@ -67,5 +67,15 @@ const ConfigSchema = new Schema({
   },
 });
 
-const Config = models.Config || model("Config", ConfigSchema);
+export interface ConfigDocument extends mongoose.Document {
+  activityXPPolicy?: {
+    message?: any;
+    voice?: any;
+    reaction?: any;
+    command?: any;
+  };
+  // 필요시 다른 필드도 추가
+}
+
+const Config = (models.Config as mongoose.Model<ConfigDocument>) || model<ConfigDocument>("Config", ConfigSchema);
 export default Config; 

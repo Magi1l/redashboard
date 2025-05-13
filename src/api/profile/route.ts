@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
-import User from "@/lib/models/User";
-import Level from "@/lib/models/Level";
-import Purchase from "@/lib/models/Purchase";
+import UserDefault from "@/lib/models/User";
+import LevelDefault from "@/lib/models/Level";
+import PurchaseDefault from "@/lib/models/Purchase";
 import { errorResponse } from "@/lib/middleware/errorResponse";
 import { recordMetric } from "@/lib/monitoring/metrics";
 import { log } from "@/lib/logging/logger";
 import { measureDbQuery } from "@/lib/monitoring/performance";
+import mongoose from "mongoose";
 
 // User, Level, Purchase lean 타입 명확화
 interface UserLean {
@@ -33,6 +34,34 @@ interface PurchaseLean {
   purchasedAt: Date;
   quantity: number;
 }
+// User, Level, Purchase mongoose 타입 명확화
+interface UserDoc extends mongoose.Document {
+  discordId: string;
+  username?: string;
+  avatar?: string;
+  servers?: string[];
+  points: number;
+  purchases?: string[];
+  profileBackground?: string;
+}
+interface LevelDoc extends mongoose.Document {
+  userId: string;
+  guildId: string;
+  xp: number;
+  level: number;
+  lastMessage: Date;
+  xpHistory: { date: Date; amount: number }[];
+}
+interface PurchaseDoc extends mongoose.Document {
+  userId: string;
+  itemId: string;
+  guildId: string;
+  purchasedAt: Date;
+  quantity: number;
+}
+const User = UserDefault as mongoose.Model<UserDoc>;
+const Level = LevelDefault as mongoose.Model<LevelDoc>;
+const Purchase = PurchaseDefault as mongoose.Model<PurchaseDoc>;
 
 export async function GET(req: NextRequest) {
   const endpoint = "/api/profile";
@@ -51,9 +80,9 @@ export async function GET(req: NextRequest) {
       log.warn("필수 파라미터 누락", { discordId, guildId });
       return NextResponse.json(errorResponse({ code: "BE4001", message: errorMsg }, 400), { status });
     }
-    const user = await measureDbQuery("User.findOne", () => (User as any).findOne({ discordId }).lean()) as UserLean | null;
-    const level = await measureDbQuery("Level.findOne", () => (Level as any).findOne({ userId: discordId, guildId }).lean()) as LevelLean | null;
-    const purchases = await measureDbQuery("Purchase.find", () => (Purchase as any).find({ userId: discordId, guildId }).lean()) as PurchaseLean[];
+    const user = await measureDbQuery("User.findOne", () => User.findOne({ discordId }).lean()) as UserLean | null;
+    const level = await measureDbQuery("Level.findOne", () => Level.findOne({ userId: discordId, guildId }).lean()) as LevelLean | null;
+    const purchases = await measureDbQuery("Purchase.find", () => Purchase.find({ userId: discordId, guildId }).lean()) as PurchaseLean[];
     log.info("프로필 데이터 조회 성공", { discordId, guildId });
     return NextResponse.json({ user, level, purchases });
   } catch (err: any) {

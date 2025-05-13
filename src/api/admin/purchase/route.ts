@@ -3,6 +3,15 @@ import { connectDB } from "@/lib/mongodb";
 import Purchase from "@/lib/models/Purchase";
 import mongoose from "mongoose";
 
+// Purchase 타입 명확화
+interface PurchaseDoc extends mongoose.Document {
+  userId: string;
+  itemId: string;
+  guildId: string;
+  purchasedAt: Date;
+  quantity: number;
+}
+
 // Purchase 쿼리 타입 명확화
 interface PurchaseQuery {
   userId?: string;
@@ -23,13 +32,13 @@ export async function GET(req: NextRequest) {
     query.purchasedAt = query.purchasedAt || {};
     query.purchasedAt.$lte = new Date(searchParams.get("to")!);
   }
-  const purchases = await (Purchase as mongoose.Model<any>).find(query).sort({ purchasedAt: -1 }).lean();
+  const purchases = await (Purchase as mongoose.Model<PurchaseDoc>).find(query).sort({ purchasedAt: -1 }).lean();
   return NextResponse.json(purchases);
 }
 
 export async function DELETE(req: NextRequest) {
   await connectDB();
   const { _id } = await req.json();
-  await (Purchase as mongoose.Model<any>).findByIdAndDelete(_id);
+  await (Purchase as mongoose.Model<PurchaseDoc>).findByIdAndDelete(_id);
   return NextResponse.json({ success: true });
 } 
