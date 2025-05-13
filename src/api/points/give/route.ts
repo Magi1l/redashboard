@@ -19,11 +19,11 @@ const User = UserDefault as mongoose.Model<UserDocument>;
 export async function POST(req: NextRequest) {
   await connectDB();
   const session = await mongoose.startSession();
-  let discordId: string, amount: number;
+  // let discordId, amount 모두 재할당 필요하므로 let 유지
   try {
     const body = await req.json();
-    discordId = body.discordId;
-    amount = Number(body.amount);
+    const discordId = body.discordId;
+    const amount = Number(body.amount);
     if (!discordId || !amount) {
       throw new Error("필수 정보 누락");
     }

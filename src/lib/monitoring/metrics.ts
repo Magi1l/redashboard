@@ -14,7 +14,7 @@ const metrics: Record<string, Metric> = {};
 // 임계치(기본값, 환경변수로 오버라이드 가능)
 const ERROR_RATE_THRESHOLD = Number(process.env.ERROR_RATE_THRESHOLD) || 0.2; // 20%
 const AVG_MS_THRESHOLD = Number(process.env.AVG_MS_THRESHOLD) || 2000; // 2초
-let lastAlertAt: Record<string, number> = {};
+const lastAlertAt: Record<string, number> = {};
 const ALERT_INTERVAL = 5 * 60 * 1000; // 5분 중복 알림 방지
 
 export function recordMetric(endpoint: string, status: number, duration: number, error?: string) {

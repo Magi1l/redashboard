@@ -1,5 +1,6 @@
 import LevelDefault, { LevelDocument, LevelHistory } from "@/lib/models/Level";
 import Config from "@/lib/models/Config";
+import mongoose from "mongoose";
 
 const Level = LevelDefault;
 
@@ -83,9 +84,9 @@ export async function grantXP({ discordId, guildId, type, baseXP, channelId, req
     return { success: false, reason: "XP가 0 이하" };
   }
   // 5. 일일 상한 체크 및 지급량 조정
-  let today = new Date();
+  const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const levelDoc: LevelDocument | null = await Level.findOne({ userId: discordId, guildId });
+  const levelDoc: LevelDocument | null = await (Level as mongoose.Model<any>).findOne({ userId: discordId, guildId });
   let todayXP = 0;
   if (levelDoc && Array.isArray(levelDoc.xpHistory)) {
     todayXP = levelDoc.xpHistory
