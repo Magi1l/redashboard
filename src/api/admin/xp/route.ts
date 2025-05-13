@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/api/auth/[...nextauth]/route";
-import Config from "@/lib/models/Config";
 import { connectDB } from "@/lib/mongodb";
 import LevelDefault from "@/lib/models/Level";
-import UserDefault from "@/lib/models/User";
 import mongoose from "mongoose";
 
 // Level 타입 명확화
@@ -14,14 +12,8 @@ interface LevelDoc extends mongoose.Document {
   level: number;
   xp: number;
 }
-// User 타입 명확화
-interface UserDoc extends mongoose.Document {
-  discordId: string;
-  points: number;
-}
 
 const Level = LevelDefault as mongoose.Model<LevelDoc>;
-const User = UserDefault as mongoose.Model<UserDoc>;
 
 export async function GET(req: NextRequest) {
   const session = await getServerSession({ req, ...authOptions });

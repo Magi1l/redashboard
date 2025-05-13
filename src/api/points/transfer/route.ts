@@ -47,15 +47,18 @@ export async function POST(req: NextRequest) {
       toUser.points += amount;
       await fromUser.save({ session });
       await toUser.save({ session });
-      // TODO: 이체 내역 기록, 알림 등 부수효과는 추후 확장
+      // 이체 내역 기록, 알림 등 부수효과는 추후 별도 구현 필요(실서비스 적용 시 확장)
     });
     session.endSession();
     // 트랜잭션 성공 시 최신 포인트 반환
     const fromUser = await User.findOne({ discordId: fromDiscordId });
     const toUser = await User.findOne({ discordId: toDiscordId });
     return NextResponse.json({ success: true, fromPoints: fromUser?.points, toPoints: toUser?.points });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    let errorMsgText = "알 수 없는 오류";
+    if (err instanceof Error) errorMsgText = err.message;
+    else if (typeof err === "string") errorMsgText = err;
     session.endSession();
-    return NextResponse.json({ success: false, error: err.message || "포인트 이체 중 오류 발생" }, { status: 500 });
+    return NextResponse.json({ success: false, error: errorMsgText || "포인트 이체 중 오류 발생" }, { status: 500 });
   }
 } 

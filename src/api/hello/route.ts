@@ -7,7 +7,7 @@ import { authOptions } from "@/lib/auth";
 
 const ADMIN_EMAIL = "admin@example.com"; // 실제 운영자 이메일로 교체
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session || session.user?.email !== ADMIN_EMAIL) {
     return NextResponse.json({ error: "권한 없음" }, { status: 403 });
@@ -20,12 +20,15 @@ export async function GET(req: NextRequest) {
     if (Math.random() < 0.1) throw new Error("테스트 에러 발생!");
     // 정상 응답
     return NextResponse.json({ message: "Hello, world!" });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    let errorMsgText = "알 수 없는 오류";
+    if (err instanceof Error) errorMsgText = err.message;
+    else if (typeof err === "string") errorMsgText = err;
     status = 500;
-    errorMsg = err.message;
+    errorMsg = errorMsgText;
     // 에러 발생 시 슬랙 알림 전송
-    await sendSlackAlert(`[API ERROR] /api/hello: ${err.message}`);
-    return NextResponse.json({ error: err.message }, { status });
+    await sendSlackAlert(`[API ERROR] /api/hello: ${errorMsgText}`);
+    return NextResponse.json({ error: errorMsgText }, { status });
   } finally {
     const duration = endTimer(timer);
     recordMetric("/api/hello", status, duration, errorMsg);

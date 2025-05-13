@@ -22,11 +22,14 @@ export async function GET(req: NextRequest) {
     if (type === "slow") await new Promise(res => setTimeout(res, 2500)); // 2.5초 지연(성능 임계치 초과)
     if (type === "alert") await sendSlackAlert("[실습] 수동 알림 트리거");
     return NextResponse.json({ message: `테스트 성공 (${type})` });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    let errorMsgText = "알 수 없는 오류";
+    if (err instanceof Error) errorMsgText = err.message;
+    else if (typeof err === "string") errorMsgText = err;
     status = 500;
-    errorMsg = err.message;
-    await sendSlackAlert(`[API ERROR] /api/monitoring-test: ${err.message}`);
-    return NextResponse.json({ error: err.message }, { status });
+    errorMsg = errorMsgText;
+    await sendSlackAlert(`[API ERROR] /api/monitoring-test: ${errorMsgText}`);
+    return NextResponse.json({ error: errorMsgText }, { status });
   } finally {
     const duration = endTimer(timer);
     recordMetric("/api/monitoring-test", status, duration, errorMsg);

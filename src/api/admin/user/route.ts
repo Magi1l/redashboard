@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/mongodb";
-import User from "@/lib/models/User";
-import Level from "@/lib/models/Level";
+import UserModel from "@/lib/models/User";
+import LevelModel from "@/lib/models/Level";
 import mongoose from "mongoose";
 
 // User 타입 명확화
@@ -19,13 +19,16 @@ interface LevelDoc extends mongoose.Document {
   level: number;
 }
 
+const User = UserModel as mongoose.Model<UserDoc>;
+const Level = LevelModel as mongoose.Model<LevelDoc>;
+
 export async function GET(req: NextRequest) {
   const session = await getServerSession({ req, ...authOptions });
   if (!session) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
   await connectDB();
-  const users = await (User as mongoose.Model<UserDoc>).find({}, { discordId: 1, username: 1, points: 1, _id: 0 }, undefined).lean();
+  const users = await (User as mongoose.Model<UserDoc>).find({}, { discordId: 1, username: 1, points: 1, _id: 0 }).lean();
   return NextResponse.json(users);
 }
 

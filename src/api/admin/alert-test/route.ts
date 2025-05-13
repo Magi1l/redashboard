@@ -5,7 +5,7 @@ import { sendSlackAlert } from "@/lib/monitoring/alert";
 
 const ADMIN_EMAIL = "admin@example.com"; // 실제 운영자 이메일로 교체
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   const session = await getServerSession(authOptions);
   if (!session || session.user?.email !== ADMIN_EMAIL) {
     return NextResponse.json({ error: "권한 없음" }, { status: 403 });

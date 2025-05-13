@@ -85,9 +85,12 @@ export async function GET(req: NextRequest) {
     const purchases = await measureDbQuery("Purchase.find", () => Purchase.find({ userId: discordId, guildId }).lean()) as PurchaseLean[];
     log.info("프로필 데이터 조회 성공", { discordId, guildId });
     return NextResponse.json({ user, level, purchases });
-  } catch (err: any) {
+  } catch (err: unknown) {
+    let errorMsgText = "unknown error";
+    if (err instanceof Error) errorMsgText = err.message;
+    else if (typeof err === "string") errorMsgText = err;
     status = 500;
-    errorMsg = err?.message || "unknown error";
+    errorMsg = errorMsgText;
     log.error("프로필 API 에러", { error: errorMsg });
     return NextResponse.json(errorResponse(err), { status });
   } finally {

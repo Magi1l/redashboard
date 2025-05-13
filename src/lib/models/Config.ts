@@ -67,12 +67,22 @@ const ConfigSchema = new Schema({
   },
 });
 
+export interface ActivityXPPolicyItem {
+  enabled: boolean;
+  minXP: number;
+  maxXP: number;
+  multiplier: number;
+  cooldownSec: number;
+  dailyCap?: number;
+  requireMic?: boolean;
+}
+
 export interface ConfigDocument extends mongoose.Document {
   activityXPPolicy?: {
-    message?: any;
-    voice?: any;
-    reaction?: any;
-    command?: any;
+    message?: ActivityXPPolicyItem;
+    voice?: ActivityXPPolicyItem;
+    reaction?: ActivityXPPolicyItem;
+    command?: ActivityXPPolicyItem;
   };
   // 필요시 다른 필드도 추가
 }

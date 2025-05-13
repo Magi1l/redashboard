@@ -3,7 +3,7 @@ import { getMetrics } from "@/lib/monitoring/metrics";
 import { getPerfSummary } from "@/lib/monitoring/performance";
 import { alertHistory } from "@/lib/monitoring/alert";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   // 헬스체크 및 메트릭/성능/알림 내역 반환
   return NextResponse.json({
     status: "ok",
