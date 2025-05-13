@@ -1,13 +1,45 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/api/auth/[...nextauth]/route";
-import mongoose from "mongoose";
-import ShopItem from "@/lib/models/ShopItem";
-import Purchase from "@/lib/models/Purchase";
-import User from "@/lib/models/User";
+import ShopItemDefault from "@/lib/models/ShopItem";
+import PurchaseDefault from "@/lib/models/Purchase";
+import UserDefault from "@/lib/models/User";
 import { connectDB } from "@/lib/mongodb";
+import mongoose from "mongoose";
 
-export async function GET(req: NextRequest) {
+interface ShopItemDoc extends mongoose.Document {
+  name: string;
+  description?: string;
+  price: number;
+  image?: string;
+  type: string;
+  stock?: number;
+  createdAt?: Date;
+}
+
+interface PurchaseDoc extends mongoose.Document {
+  userId: string;
+  itemId: string;
+  guildId: string;
+  purchasedAt: Date;
+  quantity: number;
+}
+
+interface UserDoc extends mongoose.Document {
+  discordId: string;
+  username?: string;
+  avatar?: string;
+  servers?: string[];
+  points: number;
+  purchases?: string[];
+  profileBackground?: string;
+}
+
+const ShopItem = ShopItemDefault as mongoose.Model<ShopItemDoc>;
+const Purchase = PurchaseDefault as mongoose.Model<PurchaseDoc>;
+const User = UserDefault as mongoose.Model<UserDoc>;
+
+export async function GET() {
   const session = await getServerSession({ req, ...authOptions });
   if (!session) {
     return new NextResponse("Unauthorized", { status: 401 });
@@ -16,7 +48,7 @@ export async function GET(req: NextRequest) {
   return NextResponse.json({ items });
 }
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
   await connectDB();
   const { userId, itemId, guildId } = await req.json();
   const user = await User.findOne({ discordId: userId });
@@ -27,11 +59,11 @@ export async function POST(req: NextRequest) {
   if (user.points < item.price) {
     return NextResponse.json({ error: "포인트가 부족합니다." }, { status: 400 });
   }
-  if (item.stock <= 0) {
+  if (item.stock !== undefined && item.stock <= 0) {
     return NextResponse.json({ error: "재고가 없습니다." }, { status: 400 });
   }
   user.points -= item.price;
-  item.stock -= 1;
+  if (item.stock !== undefined) item.stock -= 1;
   await user.save();
   await item.save();
   const purchase = await Purchase.create({ userId, itemId, guildId });

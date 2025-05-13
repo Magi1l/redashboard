@@ -15,10 +15,6 @@ interface UserLean {
   profileBackground?: string;
 }
 
-// 메모리 캐시: { [guildId]: { data, expires } }
-const rankingCache: Record<string, { data: UserLean[]; expires: number }> = {};
-const CACHE_TTL = 30 * 1000; // 30초
-
 export async function GET(req: NextRequest) {
   const session = await getServerSession({ req, ...authOptions });
   if (!session) {

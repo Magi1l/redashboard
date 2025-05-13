@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { recordMetric } from "@/lib/monitoring/metrics";
 import { startTimer, endTimer } from "@/lib/monitoring/performance";
 import { sendSlackAlert } from "@/lib/monitoring/alert";

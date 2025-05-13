@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getMetrics } from "@/lib/monitoring/metrics";
 import { getPerfSummary } from "@/lib/monitoring/performance";
 import { alertHistory } from "@/lib/monitoring/alert";

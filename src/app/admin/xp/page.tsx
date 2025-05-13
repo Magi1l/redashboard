@@ -113,7 +113,6 @@ export default function AdminXPPage() {
     command: { enabled: true, minXP: 1, maxXP: 100, multiplier: 1.0, cooldownSec: 60 },
   });
   const [loading, setLoading] = useState(false);
-  const [message, setMessage] = useState("");
   const [baseXPError, setBaseXPError] = useState("");
   const [multiplierError, setMultiplierError] = useState("");
   const [channelErrors, setChannelErrors] = useState<{ [key: string]: string }>({});
@@ -151,7 +150,7 @@ export default function AdminXPPage() {
         setVoiceXPSettings(data.voiceXPSettings ?? { multiplier: 1.0, requireMic: false });
         setActivityXPSettings(data.activityXPSettings ?? { message: 1.0, voice: 1.0 });
         setRoleRewards(data.roleRewards ?? []);
-        setActivityXPPolicy(data.activityXPPolicy ?? activityXPPolicy);
+        setActivityXPPolicy((prev) => data.activityXPPolicy ?? prev);
       })
       .finally(() => setLoading(false));
   }, [selectedServer]);
@@ -198,7 +197,7 @@ export default function AdminXPPage() {
   }, [roleRewards]);
 
   // 채널별 설정 핸들러
-  const handleChannelSetting = (channelId: string, field: string, value: any) => {
+  const handleChannelSetting = (channelId: string, field: keyof ChannelXPSetting, value: string | number | boolean) => {
     setChannelXPSettings((prev) => {
       const idx = prev.findIndex((c: ChannelXPSetting) => c.channelId === channelId);
       if (idx === -1) {
@@ -220,7 +219,7 @@ export default function AdminXPPage() {
   // 레벨별 역할 보상 행 추가/삭제/수정
   const addRoleReward = () => setRoleRewards([...roleRewards, { level: 1, roleId: "" }]);
   const removeRoleReward = (idx: number) => setRoleRewards(roleRewards.filter((_, i) => i !== idx));
-  const updateRoleReward = (idx: number, field: "level" | "roleId", value: any) => {
+  const updateRoleReward = (idx: number, field: "level" | "roleId", value: string | number) => {
     setRoleRewards((prev) => prev.map((r, i) => i === idx ? { ...r, [field]: value } : r));
   };
 

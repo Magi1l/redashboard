@@ -1,6 +1,5 @@
 type LogLevel = "error" | "warn" | "info" | "debug";
 
-const LEVELS: LogLevel[] = ["error", "warn", "info", "debug"];
 const LEVEL_COLORS: Record<LogLevel, string> = {
   error: "\x1b[31m", // red
   warn: "\x1b[33m", // yellow

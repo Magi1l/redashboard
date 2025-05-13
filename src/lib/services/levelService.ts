@@ -1,6 +1,5 @@
 import LevelDefault, { LevelDocument, LevelHistory } from "@/lib/models/Level";
 import Config, { ConfigDocument } from "@/lib/models/Config";
-import mongoose from "mongoose";
 import redis from "@/lib/redis";
 
 const Level = LevelDefault;
@@ -32,12 +31,6 @@ interface ActivityXPPolicyItem {
   cooldownSec: number;
   dailyCap?: number;
   requireMic?: boolean;
-}
-interface ActivityXPPolicy {
-  message: ActivityXPPolicyItem;
-  voice: ActivityXPPolicyItem;
-  reaction: ActivityXPPolicyItem;
-  command: ActivityXPPolicyItem;
 }
 
 // GrantXP 반환 타입 명확화

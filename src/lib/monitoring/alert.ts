@@ -7,7 +7,7 @@ export type AlertEvent = {
   type: "slack" | "webhook";
   channel?: string;
   message: string;
-  payload?: any;
+  payload?: Record<string, unknown>;
   at: number;
   status: "success" | "fail";
   error?: string;
