@@ -14,8 +14,8 @@ export default class ErrorBoundary extends React.Component<{ children: ReactNode
   static getDerivedStateFromError(error: Error) {
     return { hasError: true };
   }
-  componentDidCatch(error: Error, errorInfo: { componentStack: string }) {
-    this.setState({ error, errorInfo });
+  componentDidCatch(_error: Error, errorInfo: { componentStack: string }) {
+    this.setState({ error: _error, errorInfo });
     // 외부 로깅 연동 필요시 여기에 추가
   }
   handleReload = () => {

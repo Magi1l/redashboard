@@ -12,10 +12,10 @@ const options = {
 let client: MongoClient;
 
 if (process.env.NODE_ENV === "development") {
-  if (!(global as any)._mongoClient) {
-    (global as any)._mongoClient = new MongoClient(uri, options);
+  if (!global._mongoClient) {
+    global._mongoClient = new MongoClient(uri, options);
   }
-  client = (global as any)._mongoClient;
+  client = global._mongoClient;
 } else {
   client = new MongoClient(uri, options);
 }
