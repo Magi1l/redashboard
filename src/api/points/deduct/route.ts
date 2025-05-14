@@ -2,17 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import UserDefault from "@/lib/models/User";
 import mongoose from "mongoose";
-
-// UserDocument 타입 명확화
-interface UserDocument extends mongoose.Document {
-  discordId: string;
-  username?: string;
-  avatar?: string;
-  servers?: string[];
-  points: number;
-  purchases?: string[];
-  profileBackground?: string;
-}
+import type { UserDocument } from "@/lib/models/User";
 
 const User = UserDefault as mongoose.Model<UserDocument>;
 
