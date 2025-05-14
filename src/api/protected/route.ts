@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerUser } from "@/lib/auth/discord";
 import type { JwtPayload } from "jsonwebtoken";
 

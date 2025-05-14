@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 import { getServerUser } from "@/lib/auth/discord";
 import { connectDB } from "@/lib/mongodb";
 import Purchase from "@/lib/models/Purchase";
