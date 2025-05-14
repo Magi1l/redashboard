@@ -19,7 +19,6 @@ interface DiscordUserInfo {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const code = searchParams.get("code");
-  const state = searchParams.get("state");
   if (!code) return NextResponse.redirect("/");
 
   try {
@@ -40,7 +39,7 @@ export async function GET(req: NextRequest) {
       maxAge: 60 * 60 * 24 * 7,
     });
     return res;
-  } catch (e) {
+  } catch {
     return NextResponse.redirect("/?error=auth");
   }
 } 

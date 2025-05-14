@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerUser } from "@/lib/auth/discord";
 import { connectDB } from "@/lib/mongodb";
 import UserDefault from "@/lib/models/User";
-import type { JwtPayload } from "jsonwebtoken";
 import Level from "@/lib/models/Level";
 
 export async function POST(req: NextRequest) {

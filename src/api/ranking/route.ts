@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerUser } from "@/lib/auth/discord";
 import { connectDB } from "@/lib/mongodb";
-import type { JwtPayload } from "jsonwebtoken";
 import UserDefault from "@/lib/models/User";
-import type { UserDocument } from "@/lib/models/User";
 
 // User lean 타입 명확화
 interface UserLean {
@@ -16,7 +14,7 @@ interface UserLean {
   profileBackground?: string;
 }
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const user = await getServerUser();
   if (!user || typeof user === "string") {
     return new NextResponse("Unauthorized", { status: 401 });

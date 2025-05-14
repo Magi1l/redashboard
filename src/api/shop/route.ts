@@ -6,7 +6,6 @@ import type { PurchaseDocument } from "@/lib/models/Purchase";
 import UserDefault from "@/lib/models/User";
 import { connectDB } from "@/lib/mongodb";
 import mongoose from "mongoose";
-import type { JwtPayload } from "jsonwebtoken";
 
 interface ShopItemDoc extends mongoose.Document {
   name: string;
@@ -32,7 +31,7 @@ const ShopItem = ShopItemDefault as mongoose.Model<ShopItemDoc>;
 const Purchase = PurchaseDefault as mongoose.Model<PurchaseDocument>;
 const User = UserDefault as mongoose.Model<UserDoc>;
 
-export async function GET(request: Request) {
+export async function GET() {
   const user = await getServerUser();
   if (!user || typeof user === "string") {
     return new NextResponse("Unauthorized", { status: 401 });

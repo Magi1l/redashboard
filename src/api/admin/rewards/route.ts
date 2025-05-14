@@ -2,11 +2,10 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerUser } from "@/lib/auth/discord";
 import Config from "@/lib/models/Config";
 import { connectDB } from "@/lib/mongodb";
-import type { JwtPayload } from "jsonwebtoken";
 
 const CONFIG_KEY = "xp";
 
-export async function GET(req: NextRequest) {
+export async function GET() {
   const user = await getServerUser();
   if (!user || typeof user === "string") {
     return new NextResponse("Unauthorized", { status: 401 });
@@ -18,13 +17,13 @@ export async function GET(req: NextRequest) {
   });
 }
 
-export async function POST(req: NextRequest) {
+export async function POST() {
   const user = await getServerUser();
   if (!user || typeof user === "string") {
     return new NextResponse("Unauthorized", { status: 401 });
   }
   await connectDB();
-  const { rewards } = await req.json();
+  const { rewards } = await (await import('next/server')).NextRequest.prototype.json.call(arguments[0]);
   await Config.findOneAndUpdate(
     { key: CONFIG_KEY },
     { $set: { rewards } },
