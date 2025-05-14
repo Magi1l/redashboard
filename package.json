@@ -37,6 +37,9 @@
     "uuid": "^11.1.0"
   },
   "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
     "prepare": "husky install"
   },
   "lint-staged": {
