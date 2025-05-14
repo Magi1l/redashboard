@@ -1,6 +1,16 @@
-import mongoose from "mongoose";
+import mongoose, { Document, Model } from "mongoose";
 
-const ShopItemSchema = new mongoose.Schema({
+export type ShopItemDocument = Document & {
+  name: string;
+  description?: string;
+  price: number;
+  image?: string;
+  type: string;
+  stock?: number;
+  createdAt?: Date;
+};
+
+const ShopItemSchema = new mongoose.Schema<ShopItemDocument>({
   name: { type: String, required: true },
   description: String,
   price: { type: Number, required: true },
@@ -10,4 +20,6 @@ const ShopItemSchema = new mongoose.Schema({
   createdAt: { type: Date, default: Date.now }
 });
 
-export default mongoose.models.ShopItem || mongoose.model("ShopItem", ShopItemSchema); 
+const ShopItem = (mongoose.models.ShopItem as Model<ShopItemDocument>) || mongoose.model<ShopItemDocument>("ShopItem", ShopItemSchema);
+
+export default ShopItem; 
