@@ -6,6 +6,12 @@ const RewardSchema = new Schema({
   value: { type: String, required: true },
 }, { _id: false });
 
+export type Reward = {
+  level: number;
+  type: string;
+  value: string;
+};
+
 const NotificationSchema = new Schema({
   levelUp: { type: Boolean, default: true },
   reward: { type: Boolean, default: true },
@@ -86,6 +92,7 @@ export interface ActivityXPPolicyItem {
 
 export interface ConfigDocument extends mongoose.Document {
   notifications?: Notification;
+  rewards?: Reward[];
   activityXPPolicy?: {
     message?: ActivityXPPolicyItem;
     voice?: ActivityXPPolicyItem;
