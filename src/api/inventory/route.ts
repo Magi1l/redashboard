@@ -1,20 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions, CustomSession } from "@/api/auth/[...nextauth]/route";
+import { getServerUser } from "@/lib/auth/discord";
+import { connectDB } from "@/lib/mongodb";
 import Purchase from "@/lib/models/Purchase";
-import type { PurchaseDocument } from "@/lib/models/Purchase";
-import type { Model } from "mongoose";
+import type { JwtPayload } from "jsonwebtoken";
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession({ req, ...authOptions });
-  if (!session) {
+  const user = await getServerUser();
+  if (!user || typeof user === "string") {
     return new NextResponse("Unauthorized", { status: 401 });
   }
-  const discordId = (session as CustomSession).user?.id;
-  if (!discordId) {
-    return new NextResponse("Unauthorized", { status: 401 });
-  }
-  const PurchaseModel = Purchase as Model<PurchaseDocument>;
-  const inventory = await PurchaseModel.find({ userId: discordId }).lean();
+  const discordId = (user as JwtPayload).id;
+  await connectDB();
+  const inventory = await Purchase.find({ userId: discordId }).lean();
   return NextResponse.json({ inventory });
 } 

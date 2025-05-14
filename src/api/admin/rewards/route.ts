@@ -1,14 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/api/auth/[...nextauth]/route";
+import { getServerUser } from "@/lib/auth/discord";
 import Config from "@/lib/models/Config";
 import { connectDB } from "@/lib/mongodb";
+import type { JwtPayload } from "jsonwebtoken";
 
 const CONFIG_KEY = "xp";
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession({ req, ...authOptions });
-  if (!session) {
+  const user = await getServerUser();
+  if (!user || typeof user === "string") {
     return new NextResponse("Unauthorized", { status: 401 });
   }
   await connectDB();
@@ -19,8 +19,8 @@ export async function GET(req: NextRequest) {
 }
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession({ req, ...authOptions });
-  if (!session) {
+  const user = await getServerUser();
+  if (!user || typeof user === "string") {
     return new NextResponse("Unauthorized", { status: 401 });
   }
   await connectDB();

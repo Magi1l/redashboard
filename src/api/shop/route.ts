@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/api/auth/[...nextauth]/route";
+import { getServerUser } from "@/lib/auth/discord";
 import ShopItemDefault from "@/lib/models/ShopItem";
 import PurchaseDefault from "@/lib/models/Purchase";
 import type { PurchaseDocument } from "@/lib/models/Purchase";
 import UserDefault from "@/lib/models/User";
 import { connectDB } from "@/lib/mongodb";
 import mongoose from "mongoose";
+import type { JwtPayload } from "jsonwebtoken";
 
 interface ShopItemDoc extends mongoose.Document {
   name: string;
@@ -33,10 +33,11 @@ const Purchase = PurchaseDefault as mongoose.Model<PurchaseDocument>;
 const User = UserDefault as mongoose.Model<UserDoc>;
 
 export async function GET(request: Request) {
-  const session = await getServerSession({ req: request, ...authOptions });
-  if (!session) {
+  const user = await getServerUser();
+  if (!user || typeof user === "string") {
     return new NextResponse("Unauthorized", { status: 401 });
   }
+  await connectDB();
   const items = await ShopItem.find({}).lean();
   return NextResponse.json({ items });
 }

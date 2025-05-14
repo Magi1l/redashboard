@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
 import { getUserProfile } from "@/lib/services/userService";
-import { authOptions } from "@/api/auth/[...nextauth]/route";
-import type { CustomSession } from "@/api/auth/[...nextauth]/route";
+import { getServerUser } from "@/lib/auth/discord";
+import type { JwtPayload } from "jsonwebtoken";
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession({ req, ...authOptions }) as CustomSession;
-  if (!session) {
+  const user = await getServerUser();
+  if (!user || typeof user === "string") {
     return new NextResponse("Unauthorized", { status: 401 });
   }
-  const discordId = session.user.id;
-  const user = await getUserProfile(discordId);
-  return NextResponse.json({ user });
+  const discordId = (user as JwtPayload).id;
+  const userProfile = await getUserProfile(discordId);
+  return NextResponse.json({ user: userProfile });
 } 
