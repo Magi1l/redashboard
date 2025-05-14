@@ -15,7 +15,7 @@ const nextConfig = {
     ignoreDuringBuilds: true,
   },
   experimental: {
-    missingSuspenseWithCSRBailout: false,
+    // 필요시 다른 실험적 옵션만 남기고, missingSuspenseWithCSRBailout은 제거
   },
 };
 
