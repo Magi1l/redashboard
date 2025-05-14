@@ -1,6 +1,14 @@
-import mongoose from "mongoose";
+import mongoose, { Document, Model } from "mongoose";
 
-const PurchaseSchema = new mongoose.Schema({
+export type PurchaseDocument = Document & {
+  userId: string;
+  itemId: mongoose.Types.ObjectId;
+  guildId: string;
+  purchasedAt?: Date;
+  quantity?: number;
+};
+
+const PurchaseSchema = new mongoose.Schema<PurchaseDocument>({
   userId: { type: String, required: true },
   itemId: { type: mongoose.Schema.Types.ObjectId, ref: "ShopItem", required: true },
   guildId: { type: String, required: true },
@@ -8,4 +16,6 @@ const PurchaseSchema = new mongoose.Schema({
   quantity: { type: Number, default: 1 }
 });
 
-export default mongoose.models.Purchase || mongoose.model("Purchase", PurchaseSchema); 
+const Purchase = (mongoose.models.Purchase as Model<PurchaseDocument>) || mongoose.model<PurchaseDocument>("Purchase", PurchaseSchema);
+
+export default Purchase; 
