@@ -1,16 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { connectDB } from "@/lib/mongodb";
 import Purchase from "@/lib/models/Purchase";
+import type { PurchaseDocument } from "@/lib/models/Purchase";
+import type { Model } from "mongoose";
 import mongoose from "mongoose";
-
-// Purchase 타입 명확화
-interface PurchaseDoc extends mongoose.Document {
-  userId: string;
-  itemId: string;
-  guildId: string;
-  purchasedAt: Date;
-  quantity: number;
-}
 
 // Purchase 쿼리 타입 명확화
 interface PurchaseQuery {
@@ -32,13 +25,23 @@ export async function GET(req: NextRequest) {
     query.purchasedAt = query.purchasedAt || {};
     query.purchasedAt.$lte = new Date(searchParams.get("to")!);
   }
-  const purchases = await (Purchase as mongoose.Model<PurchaseDoc>).find(query).sort({ purchasedAt: -1 }).lean();
+  // itemId가 있으면 ObjectId로 변환
+  if (query.itemId) {
+    try {
+      query.itemId = new mongoose.Types.ObjectId(query.itemId) as any;
+    } catch {
+      return NextResponse.json([], { status: 200 });
+    }
+  }
+  const PurchaseModel = Purchase as Model<PurchaseDocument>;
+  const purchases = await PurchaseModel.find(query).sort({ purchasedAt: -1 }).lean();
   return NextResponse.json(purchases);
 }
 
 export async function DELETE(req: NextRequest) {
   await connectDB();
   const { _id } = await req.json();
-  await (Purchase as mongoose.Model<PurchaseDoc>).findByIdAndDelete(_id);
+  const PurchaseModel = Purchase as Model<PurchaseDocument>;
+  await PurchaseModel.findByIdAndDelete(_id);
   return NextResponse.json({ success: true });
 } 
