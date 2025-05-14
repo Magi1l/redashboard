@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/api/auth/[...nextauth]/route";
 import { connectDB } from "@/lib/mongodb";
-import User from "@/lib/models/User";
+import User, { UserDocument } from "@/lib/models/User";
 import Level from "@/lib/models/Level";
 import Purchase from "@/lib/models/Purchase";
 
@@ -12,12 +12,13 @@ export async function GET(req: NextRequest) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
   await connectDB();
+  const UserModel = User as import("mongoose").Model<UserDocument>;
   const [userCount, totalPointsAgg, totalLevelAgg, purchaseCount, recentUsers] = await Promise.all([
-    User.countDocuments({}),
-    User.aggregate([{ $group: { _id: null, sum: { $sum: "$points" } } }]),
+    UserModel.countDocuments({}),
+    UserModel.aggregate([{ $group: { _id: null, sum: { $sum: "$points" } } }]),
     Level.aggregate([{ $group: { _id: null, sum: { $sum: "$level" } } }]),
     Purchase.countDocuments({}),
-    User.find({}).sort({ createdAt: -1 }).limit(5).lean(),
+    UserModel.find({}).sort({ createdAt: -1 }).limit(5).lean(),
   ]);
   const totalPoints = totalPointsAgg[0]?.sum ?? 0;
   const totalLevel = totalLevelAgg[0]?.sum ?? 0;
