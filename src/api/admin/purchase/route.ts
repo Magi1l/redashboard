@@ -8,7 +8,7 @@ import mongoose from "mongoose";
 // Purchase 쿼리 타입 명확화
 interface PurchaseQuery {
   userId?: string;
-  itemId?: string;
+  itemId?: string | mongoose.Types.ObjectId;
   guildId?: string;
   purchasedAt?: { $gte?: Date; $lte?: Date };
 }
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
   // itemId가 있으면 ObjectId로 변환
   if (query.itemId) {
     try {
-      query.itemId = new mongoose.Types.ObjectId(query.itemId) as any;
+      query.itemId = new mongoose.Types.ObjectId(query.itemId);
     } catch {
       return NextResponse.json([], { status: 200 });
     }
