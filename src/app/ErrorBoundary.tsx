@@ -11,7 +11,7 @@ export default class ErrorBoundary extends React.Component<{ children: ReactNode
     super(props);
     this.state = { hasError: false, error: null, errorInfo: null };
   }
-  static getDerivedStateFromError(_error: Error) {
+  static getDerivedStateFromError() {
     return { hasError: true };
   }
   componentDidCatch(_error: Error, errorInfo: { componentStack: string }) {
