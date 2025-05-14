@@ -3,6 +3,7 @@ import { connectDB } from "@/lib/mongodb";
 import UserDefault from "@/lib/models/User";
 import ShopItemDefault from "@/lib/models/ShopItem";
 import PurchaseDefault from "@/lib/models/Purchase";
+import type { PurchaseDocument } from "@/lib/models/Purchase";
 import { sendSlackAlert } from "@/lib/monitoring/alert";
 import mongoose from "mongoose";
 
@@ -26,18 +27,10 @@ interface ShopItemDoc extends mongoose.Document {
   stock?: number;
   createdAt?: Date;
 }
-// Purchase 타입 명확화
-interface PurchaseDoc extends mongoose.Document {
-  userId: string;
-  itemId: string;
-  guildId: string;
-  purchasedAt: Date;
-  quantity: number;
-}
 
 const User = UserDefault as mongoose.Model<UserDoc>;
 const ShopItem = ShopItemDefault as mongoose.Model<ShopItemDoc>;
-const Purchase = PurchaseDefault as mongoose.Model<PurchaseDoc>;
+const Purchase = PurchaseDefault as mongoose.Model<PurchaseDocument>;
 
 export async function POST(req: NextRequest) {
   await connectDB();
