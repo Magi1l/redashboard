@@ -78,7 +78,15 @@ export async function GET(req: NextRequest) {
     const user = await measureDbQuery("User.findOne", () => User.findOne({ discordId }).lean()) as UserLean | null;
     const level = await measureDbQuery("Level.findOne", () => Level.findOne({ userId: discordId, guildId }).lean()) as LevelLean | null;
     const purchasesRaw = await measureDbQuery("Purchase.find", () => Purchase.find({ userId: discordId, guildId }).lean());
-    const purchases: PurchaseLean[] = (purchasesRaw as any[]).map((p) => ({ ...p, itemId: p.itemId?.toString?.() ?? p.itemId }));
+    const purchases: PurchaseLean[] = Array.isArray(purchasesRaw)
+      ? purchasesRaw.map((p) => ({
+          userId: p.userId?.toString?.() ?? String(p.userId),
+          itemId: p.itemId?.toString?.() ?? String(p.itemId),
+          guildId: p.guildId?.toString?.() ?? String(p.guildId),
+          purchasedAt: p.purchasedAt,
+          quantity: p.quantity,
+        }))
+      : [];
     log.info("프로필 데이터 조회 성공", { discordId, guildId });
     return NextResponse.json({ user, level, purchases });
   } catch (err: unknown) {
