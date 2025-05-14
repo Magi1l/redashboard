@@ -43,7 +43,7 @@ export const errorMessages = {
 ## 4. 공통 로깅/모니터링/알림 시스템
 - 중앙집중 로깅(logger.ts)
 - API 모니터링(metrics.ts), 성능 측정(performance.ts)
-- 자동 알림(alert.ts, Slack/webhook)
+- 자동 알림(alert.ts, Discord/webhook)
 - 디버그 모드(개발 환경에서만 상세 정보 노출)
 
 ### 실습 예시
@@ -66,12 +66,8 @@ export function getMetrics() {
 }
 
 // src/lib/monitoring/alert.ts
-export async function sendSlackAlert(message: string, options?: Record<string, any>) {
-  // 슬랙 웹훅으로 알림 전송, 실패시 로깅
-  ...
-}
-export async function sendWebhookAlert(payload: any) {
-  // 일반 웹훅 알림 전송
+export async function sendDiscordAlert(message: string, options?: Record<string, any>) {
+  // 디스코드 웹훅으로 알림 전송, 실패시 로깅
   ...
 }
 
@@ -90,7 +86,7 @@ export async function measureDbQuery<T>(label: string, fn: () => Promise<T>): Pr
 ```
 
 #### 실습 시나리오
-- API 라우트에서 recordMetric, startTimer/endTimer, sendSlackAlert를 직접 호출해보고, 임계치 초과/에러 상황을 시뮬레이션
+- API 라우트에서 recordMetric, startTimer/endTimer, sendDiscordAlert를 직접 호출해보고, 임계치 초과/에러 상황을 시뮬레이션
 - app/dashboard/admin/logs/page.tsx에서 실시간 모니터링/알림 내역 확인
 - DB 쿼리/외부 API 호출에 measureDbQuery 적용하여 성능 데이터 수집
 
@@ -130,12 +126,12 @@ export async function GET(req: NextRequest) {
     const type = url.searchParams.get("type") || "ok";
     if (type === "error") throw new Error("강제 에러 발생 (실습)");
     if (type === "slow") await new Promise(res => setTimeout(res, 2500));
-    if (type === "alert") await sendSlackAlert("[실습] 수동 알림 트리거");
+    if (type === "alert") await sendDiscordAlert("[실습] 수동 알림 트리거");
     return NextResponse.json({ message: `테스트 성공 (${type})` });
   } catch (err: any) {
     status = 500;
     errorMsg = err.message;
-    await sendSlackAlert(`[API ERROR] /api/monitoring-test: ${err.message}`);
+    await sendDiscordAlert(`[API ERROR] /api/monitoring-test: ${err.message}`);
     return NextResponse.json({ error: err.message }, { status });
   } finally {
     const duration = endTimer(timer);
@@ -170,7 +166,7 @@ export async function GET(req: NextRequest) {
   ```
 - **대시보드:**
   - 에러 카운트 증가, 최근 에러 메시지 표시
-  - 슬랙/웹훅 알림 내역에 에러 메시지 기록
+  - 디스코드 웹훅 알림 내역에 에러 메시지 기록
   - 임계치 초과 시 경고 표시
 
 #### 3. 성능 임계치 초과 (`/api/monitoring-test?type=slow`)
@@ -180,7 +176,7 @@ export async function GET(req: NextRequest) {
   ```
 - **대시보드:**
   - 평균 응답 시간 증가, 성능 임계치 초과 시 경고/알림 표시
-  - 슬랙/웹훅 알림 내역에 성능 경고 기록
+  - 디스코드 웹훅 알림 내역에 성능 경고 기록
 
 #### 4. 수동 알림 트리거 (`/api/monitoring-test?type=alert`)
 - **API 응답:**
@@ -199,8 +195,8 @@ export async function GET(req: NextRequest) {
   - 호출 기록 없음(권한 체크에서 차단)
 
 ### FAQ / 트러블슈팅
-- **Q. 슬랙/웹훅 알림이 오지 않아요!**
-  - 환경변수(SLACK_WEBHOOK_URL, ALERT_WEBHOOK_URL) 설정 확인
+- **Q. 디스코드/웹훅 알림이 오지 않아요!**
+  - 환경변수(DISCORD_WEBHOOK_URL, DISCORD_ALERT_WEBHOOK_URL) 설정 확인
   - 서버 로그에서 알림 전송 실패 메시지 확인
 - **Q. 대시보드에 데이터가 안 나와요!**
   - API 호출 후 새로고침, 로그/모니터링 데이터가 정상적으로 기록되는지 확인

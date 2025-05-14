@@ -1,4 +1,4 @@
-import { sendSlackAlert } from "@/lib/monitoring/alert";
+import { sendDiscordAlert } from "@/lib/monitoring/alert";
 
 type Metric = {
   count: number;
@@ -39,7 +39,7 @@ export function recordMetric(endpoint: string, status: number, duration: number,
   if ((errorRate > ERROR_RATE_THRESHOLD || avgMs > AVG_MS_THRESHOLD)) {
     if (!lastAlertAt[endpoint] || now - lastAlertAt[endpoint] > ALERT_INTERVAL) {
       lastAlertAt[endpoint] = now;
-      sendSlackAlert(
+      sendDiscordAlert(
         `[ALERT] ${endpoint} 임계치 초과\n에러율: ${(errorRate * 100).toFixed(1)}% (기준 ${ERROR_RATE_THRESHOLD * 100}%)\n평균응답: ${Math.round(avgMs)}ms (기준 ${AVG_MS_THRESHOLD}ms)\n최근에러: ${m.lastError || "-"}`
       );
     }

@@ -1,10 +1,10 @@
 import { log } from "@/lib/logging/logger";
 
-const SLACK_WEBHOOK_URL = process.env.SLACK_WEBHOOK_URL;
-const ALERT_WEBHOOK_URL = process.env.ALERT_WEBHOOK_URL;
+const DISCORD_WEBHOOK_URL = process.env.DISCORD_WEBHOOK_URL;
+const DISCORD_ALERT_WEBHOOK_URL = process.env.DISCORD_ALERT_WEBHOOK_URL;
 
 export type AlertEvent = {
-  type: "slack" | "webhook";
+  type: "discord" | "webhook";
   channel?: string;
   message: string;
   payload?: Record<string, unknown>;
@@ -16,43 +16,43 @@ export type AlertEvent = {
 export const alertHistory: AlertEvent[] = [];
 const ALERT_HISTORY_LIMIT = 50;
 
-export async function sendSlackAlert(message: string, options?: Record<string, unknown>) {
-  if (!SLACK_WEBHOOK_URL) {
-    log.warn("SLACK_WEBHOOK_URL 미설정, 슬랙 알림 전송 생략", { message });
+export async function sendDiscordAlert(message: string, options?: Record<string, unknown>) {
+  if (!DISCORD_WEBHOOK_URL) {
+    log.warn("DISCORD_WEBHOOK_URL 미설정, 디스코드 알림 전송 생략", { message });
     return;
   }
   try {
-    await fetch(SLACK_WEBHOOK_URL, {
+    await fetch(DISCORD_WEBHOOK_URL, {
       method: "POST",
+      body: JSON.stringify({ content: message }),
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ text: message, ...options }),
     });
-    log.info("슬랙 알림 전송 완료", { message });
-    alertHistory.unshift({ type: "slack", channel: "slack", message, payload: options, at: Date.now(), status: "success" });
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    log.error("슬랙 알림 전송 실패", { error: errorMsg });
-    alertHistory.unshift({ type: "slack", channel: "slack", message, payload: options, at: Date.now(), status: "fail", error: errorMsg });
+    log.info("디스코드 알림 전송 완료", { message });
+    alertHistory.unshift({ type: "discord", channel: "discord", message, payload: options, at: Date.now(), status: "success" });
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    log.error("디스코드 알림 전송 실패", { error });
+    alertHistory.unshift({ type: "discord", channel: "discord", message, payload: options, at: Date.now(), status: "fail", error: errorMsg });
   }
   if (alertHistory.length > ALERT_HISTORY_LIMIT) alertHistory.length = ALERT_HISTORY_LIMIT;
 }
 
 export async function sendWebhookAlert(payload: Record<string, unknown>) {
-  if (!ALERT_WEBHOOK_URL) {
-    log.warn("ALERT_WEBHOOK_URL 미설정, 웹훅 알림 전송 생략", { payload });
+  if (!DISCORD_ALERT_WEBHOOK_URL) {
+    log.warn("DISCORD_ALERT_WEBHOOK_URL 미설정, 웹훅 알림 전송 생략", { payload });
     return;
   }
   try {
-    await fetch(ALERT_WEBHOOK_URL, {
+    await fetch(DISCORD_ALERT_WEBHOOK_URL, {
       method: "POST",
+      body: JSON.stringify({ content: JSON.stringify(payload) }),
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
     });
     log.info("웹훅 알림 전송 완료", { payload });
     alertHistory.unshift({ type: "webhook", channel: "webhook", message: JSON.stringify(payload), payload, at: Date.now(), status: "success" });
-  } catch (err) {
-    const errorMsg = err instanceof Error ? err.message : String(err);
-    log.error("웹훅 알림 전송 실패", { error: errorMsg });
+  } catch (error) {
+    const errorMsg = error instanceof Error ? error.message : String(error);
+    log.error("웹훅 알림 전송 실패", { error });
     alertHistory.unshift({ type: "webhook", channel: "webhook", message: JSON.stringify(payload), payload, at: Date.now(), status: "fail", error: errorMsg });
   }
   if (alertHistory.length > ALERT_HISTORY_LIMIT) alertHistory.length = ALERT_HISTORY_LIMIT;

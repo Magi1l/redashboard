@@ -4,7 +4,7 @@ import UserDefault from "@/lib/models/User";
 import ShopItemDefault from "@/lib/models/ShopItem";
 import PurchaseDefault from "@/lib/models/Purchase";
 import type { PurchaseDocument } from "@/lib/models/Purchase";
-import { sendSlackAlert } from "@/lib/monitoring/alert";
+import { sendDiscordAlert } from "@/lib/monitoring/alert";
 import mongoose from "mongoose";
 
 // User 타입 명확화
@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
     if (lowStock) {
       const item = await ShopItem.findById(body.itemId);
       const user = await User.findOne({ discordId: body.discordId });
-      sendSlackAlert(`상점 재고 임박: ${item?.name} (ID: ${item?._id})\n남은 재고: ${item?.stock}\n구매자: ${user?.username || user?.discordId}`);
+      sendDiscordAlert(`상점 재고 임박: ${item?.name} (ID: ${item?._id})\n남은 재고: ${item?.stock}\n구매자: ${user?.username || user?.discordId}`);
     }
     // 트랜잭션 성공 시 포인트 반환
     const user = await User.findOne({ discordId: body.discordId });

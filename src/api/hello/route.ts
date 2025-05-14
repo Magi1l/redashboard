@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { recordMetric } from "@/lib/monitoring/metrics";
 import { startTimer, endTimer } from "@/lib/monitoring/performance";
-import { sendSlackAlert } from "@/lib/monitoring/alert";
+import { sendDiscordAlert } from "@/lib/monitoring/alert";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/auth";
 
@@ -27,7 +27,7 @@ export async function GET() {
     status = 500;
     errorMsg = errorMsgText;
     // 에러 발생 시 슬랙 알림 전송
-    await sendSlackAlert(`[API ERROR] /api/hello: ${errorMsgText}`);
+    await sendDiscordAlert(`[API ERROR] /api/hello: ${errorMsgText}`);
     return NextResponse.json({ error: errorMsgText }, { status });
   } finally {
     const duration = endTimer(timer);
