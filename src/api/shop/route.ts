@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/api/auth/[...nextauth]/route";
 import ShopItemDefault from "@/lib/models/ShopItem";
 import PurchaseDefault from "@/lib/models/Purchase";
+import type { PurchaseDocument } from "@/lib/models/Purchase";
 import UserDefault from "@/lib/models/User";
 import { connectDB } from "@/lib/mongodb";
 import mongoose from "mongoose";
@@ -17,14 +18,6 @@ interface ShopItemDoc extends mongoose.Document {
   createdAt?: Date;
 }
 
-interface PurchaseDoc extends mongoose.Document {
-  userId: string;
-  itemId: string;
-  guildId: string;
-  purchasedAt: Date;
-  quantity: number;
-}
-
 interface UserDoc extends mongoose.Document {
   discordId: string;
   username?: string;
@@ -36,11 +29,11 @@ interface UserDoc extends mongoose.Document {
 }
 
 const ShopItem = ShopItemDefault as mongoose.Model<ShopItemDoc>;
-const Purchase = PurchaseDefault as mongoose.Model<PurchaseDoc>;
+const Purchase = PurchaseDefault as mongoose.Model<PurchaseDocument>;
 const User = UserDefault as mongoose.Model<UserDoc>;
 
-export async function GET() {
-  const session = await getServerSession({ req, ...authOptions });
+export async function GET(request: Request) {
+  const session = await getServerSession({ req: request, ...authOptions });
   if (!session) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
