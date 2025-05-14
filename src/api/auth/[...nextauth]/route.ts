@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import DiscordProvider from "next-auth/providers/discord";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
-import { connectDB } from "@/lib/mongodb";
+import client from "@/lib/mongodbClient";
 import type { Session } from "next-auth";
 import type { JWT } from "next-auth/jwt";
 
@@ -17,7 +17,7 @@ export const authOptions = {
       clientSecret: process.env.DISCORD_CLIENT_SECRET!,
     }),
   ],
-  adapter: MongoDBAdapter(connectDB()),
+  adapter: MongoDBAdapter(client),
   secret: process.env.NEXTAUTH_SECRET,
   session: { strategy: "jwt" as const },
   callbacks: {
