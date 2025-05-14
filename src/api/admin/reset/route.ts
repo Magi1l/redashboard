@@ -5,7 +5,7 @@ import User from "@/lib/models/User";
 import Level from "@/lib/models/Level";
 import Purchase from "@/lib/models/Purchase";
 
-export async function POST(_req: Request) {
+export async function POST() {
   const user = await getServerUser();
   if (!user || typeof user === "string") {
     return new NextResponse("Unauthorized", { status: 401 });

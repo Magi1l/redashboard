@@ -21,7 +21,7 @@ interface LevelDoc extends mongoose.Document {
 const User = UserModel as mongoose.Model<UserDoc>;
 const Level = LevelModel as mongoose.Model<LevelDoc>;
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   const user = await getServerUser();
   if (!user || typeof user === "string") {
     return new NextResponse("Unauthorized", { status: 401 });
