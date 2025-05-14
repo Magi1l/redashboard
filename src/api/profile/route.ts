@@ -73,18 +73,28 @@ export async function GET(req: NextRequest) {
       status = 400;
       errorMsg = "discordId, guildId required";
       log.warn("필수 파라미터 누락", { discordId, guildId });
-      return NextResponse.json(errorResponse({ code: "BE4001", message: errorMsg }), { status });
+      return NextResponse.json(
+        errorResponse({ code: "BE4001", message: errorMsg }),
+        { status },
+      );
     }
-    const user = await measureDbQuery("User.findOne", () => User.findOne({ discordId }).lean()) as UserLean | null;
-    const level = await measureDbQuery("Level.findOne", () => Level.findOne({ userId: discordId, guildId }).lean()) as LevelLean | null;
-    const purchasesRaw = await measureDbQuery("Purchase.find", () => Purchase.find({ userId: discordId, guildId }).lean());
+    const user = (await measureDbQuery("User.findOne", () =>
+      User.findOne({ discordId }).lean(),
+    )) as UserLean | null;
+    const level = (await measureDbQuery("Level.findOne", () =>
+      Level.findOne({ userId: discordId, guildId }).lean(),
+    )) as LevelLean | null;
+    const purchasesRaw = await measureDbQuery("Purchase.find", () =>
+      Purchase.find({ userId: discordId, guildId }).lean(),
+    );
     const purchases: PurchaseLean[] = Array.isArray(purchasesRaw)
       ? purchasesRaw.map((p) => ({
           userId: p.userId?.toString?.() ?? String(p.userId),
           itemId: p.itemId?.toString?.() ?? String(p.itemId),
           guildId: p.guildId?.toString?.() ?? String(p.guildId),
-          purchasedAt: p.purchasedAt,
-          quantity: p.quantity,
+          purchasedAt:
+            p.purchasedAt !== undefined ? p.purchasedAt : new Date(0),
+          quantity: p.quantity !== undefined ? p.quantity : 1,
         }))
       : [];
     log.info("프로필 데이터 조회 성공", { discordId, guildId });
@@ -100,4 +110,4 @@ export async function GET(req: NextRequest) {
   } finally {
     recordMetric(endpoint, status, Date.now() - start, errorMsg);
   }
-} 
+}

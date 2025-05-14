@@ -1,6 +1,20 @@
 {
   "extends": [
     "next/core-web-vitals",
-    "next/typescript"
-  ]
+    "next/typescript",
+    "plugin:@typescript-eslint/recommended"
+  ],
+  "plugins": [
+    "@typescript-eslint",
+    "unused-imports",
+    "eslint-comments"
+  ],
+  "rules": {
+    "@typescript-eslint/no-explicit-any": "error",
+    "prefer-const": "error",
+    "@typescript-eslint/no-unused-vars": ["error", { "argsIgnorePattern": "^_", "varsIgnorePattern": "^_" }],
+    "unused-imports/no-unused-imports": "error",
+    "eslint-comments/no-unused-disable": "error",
+    "no-warning-comments": ["error", { "terms": ["todo", "fixme", "xxx", "temp"], "location": "anywhere" }]
+  }
 }

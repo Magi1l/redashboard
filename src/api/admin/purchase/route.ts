@@ -19,13 +19,18 @@ export async function GET(req: NextRequest) {
     await connectDB();
     const { searchParams } = new URL(req.url);
     const query: PurchaseQuery = {};
-    if (searchParams.get("userId")) query.userId = searchParams.get("userId");
-    if (searchParams.get("itemId")) query.itemId = searchParams.get("itemId");
-    if (searchParams.get("guildId")) query.guildId = searchParams.get("guildId");
-    if (searchParams.get("from")) query.purchasedAt = { $gte: new Date(searchParams.get("from")!) };
-    if (searchParams.get("to")) {
+    const userId = searchParams.get("userId");
+    if (userId !== null) query.userId = userId;
+    const itemId = searchParams.get("itemId");
+    if (itemId !== null) query.itemId = itemId;
+    const guildId = searchParams.get("guildId");
+    if (guildId !== null) query.guildId = guildId;
+    const from = searchParams.get("from");
+    if (from !== null) query.purchasedAt = { $gte: new Date(from) };
+    const to = searchParams.get("to");
+    if (to !== null) {
       query.purchasedAt = query.purchasedAt || {};
-      query.purchasedAt.$lte = new Date(searchParams.get("to")!);
+      query.purchasedAt.$lte = new Date(to);
     }
     // itemId가 있으면 ObjectId로 변환
     if (query.itemId) {
@@ -36,7 +41,9 @@ export async function GET(req: NextRequest) {
       }
     }
     const PurchaseModel = Purchase as Model<PurchaseDocument>;
-    const purchases = await PurchaseModel.find(query).sort({ purchasedAt: -1 }).lean();
+    const purchases = await PurchaseModel.find(query)
+      .sort({ purchasedAt: -1 })
+      .lean();
     return NextResponse.json(purchases);
   } catch (error) {
     console.error("[GET /api/admin/purchase]", error);
@@ -55,4 +62,4 @@ export async function DELETE(req: NextRequest) {
     console.error("[DELETE /api/admin/purchase]", error);
     return new NextResponse("서버 오류", { status: 500 });
   }
-} 
+}

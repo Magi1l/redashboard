@@ -1,4 +1,4 @@
-export const errorMessages = {
+export const errorMessages: Record<string, { ko: string; en: string }> = {
   BE4001: {
     ko: "디스코드 ID와 서버 ID가 필요합니다. 다시 시도해 주세요.",
     en: "Discord ID and server ID are required. Please try again.",
@@ -23,4 +23,4 @@ export const errorMessages = {
 
 export function getErrorMessage(code: string, lang: "ko" | "en" = "ko") {
   return errorMessages[code]?.[lang] || errorMessages.default[lang];
-} 
+}

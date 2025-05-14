@@ -3,16 +3,9 @@ import { getServerUser } from "@/lib/auth/discord";
 import { connectDB } from "@/lib/mongodb";
 import UserDefault from "@/lib/models/User";
 import LevelDefault from "@/lib/models/Level";
-import mongoose from "mongoose";
+import type { LevelDocument } from "@/lib/models/Level";
 
-// Level 타입 명확화
-interface LevelDoc extends mongoose.Document {
-  userId: string;
-  guildId: string;
-  level: number;
-  xp: number;
-}
-const Level = LevelDefault as mongoose.Model<LevelDoc>;
+const Level = LevelDefault as import("mongoose").Model<LevelDocument>;
 
 export async function GET() {
   const user = await getServerUser();
@@ -32,12 +25,15 @@ export async function POST(req: Request) {
   await connectDB();
   const { userId, guildId, xp, level } = await req.json();
   if (!userId || !guildId) {
-    return NextResponse.json({ error: "userId, guildId required" }, { status: 400 });
+    return NextResponse.json(
+      { error: "userId, guildId required" },
+      { status: 400 },
+    );
   }
   const updated = await Level.findOneAndUpdate(
     { userId, guildId },
     { $set: { xp, level } },
-    { new: true, upsert: true }
+    { new: true, upsert: true },
   );
   return NextResponse.json(updated);
-} 
+}

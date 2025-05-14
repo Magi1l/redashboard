@@ -4,11 +4,15 @@ import redis from "@/lib/redis";
 
 const Level = LevelDefault;
 
-export async function addXP(discordId: string, guildId: string, amount: number) {
+export async function addXP(
+  discordId: string,
+  guildId: string,
+  amount: number,
+) {
   return await Level.findOneAndUpdate(
     { userId: discordId, guildId },
     { $inc: { xp: amount } },
-    { new: true, upsert: true }
+    { new: true, upsert: true },
   );
 }
 
@@ -41,10 +45,25 @@ interface GrantXPResult {
   user?: LevelDocument | null;
 }
 
-export async function grantXP({ discordId, guildId, type, baseXP, channelId, requireMic }: GrantXPParams): Promise<GrantXPResult> {
+export async function grantXP({
+  discordId,
+  guildId,
+  type,
+  baseXP,
+  channelId,
+  requireMic,
+}: GrantXPParams): Promise<GrantXPResult> {
   // 1. 정책 조회
-  const config = await Config.findOne({ key: `xp:${guildId}` }) as ConfigDocument | null;
-  const policy: ActivityXPPolicyItem = config?.activityXPPolicy?.[type] || { enabled: true, minXP: 1, maxXP: 100, multiplier: 1.0, cooldownSec: 60 };
+  const config = (await Config.findOne({
+    key: `xp:${guildId}`,
+  })) as ConfigDocument | null;
+  const policy: ActivityXPPolicyItem = config?.activityXPPolicy?.[type] || {
+    enabled: true,
+    minXP: 1,
+    maxXP: 100,
+    multiplier: 1.0,
+    cooldownSec: 60,
+  };
   if (!policy.enabled) {
     return { success: false, reason: "XP 지급 비활성화" };
   }
@@ -52,7 +71,11 @@ export async function grantXP({ discordId, guildId, type, baseXP, channelId, req
   const cooldownKey = `xp:cooldown:${guildId}:${discordId}:${type}${channelId ? `:${channelId}` : ""}`;
   const now = Date.now();
   const lastXP = await redis.get(cooldownKey);
-  if (policy.cooldownSec > 0 && lastXP && now - Number(lastXP) < policy.cooldownSec * 1000) {
+  if (
+    policy.cooldownSec > 0 &&
+    lastXP &&
+    now - Number(lastXP) < policy.cooldownSec * 1000
+  ) {
     return { success: false, reason: "쿨타임 미충족" };
   }
   // 3. requireMic(voice) 체크
@@ -69,17 +92,28 @@ export async function grantXP({ discordId, guildId, type, baseXP, channelId, req
   // 5. 일일 상한 체크 및 지급량 조정
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  const levelDoc: LevelDocument | null = await Level.findOne({ userId: discordId, guildId });
+  const levelDoc: LevelDocument | null = await Level.findOne({
+    userId: discordId,
+    guildId,
+  });
   let todayXP = 0;
   if (levelDoc && Array.isArray(levelDoc.xpHistory)) {
     todayXP = levelDoc.xpHistory
       .filter((h: LevelHistory) => h.date && h.date >= today)
       .reduce((sum: number, h: LevelHistory) => sum + h.amount, 0);
   }
-  if (policy.dailyCap > 0 && todayXP >= policy.dailyCap) {
+  if (
+    typeof policy.dailyCap === "number" &&
+    policy.dailyCap > 0 &&
+    todayXP >= policy.dailyCap
+  ) {
     return { success: false, reason: "일일 XP 상한 도달" };
   }
-  if (policy.dailyCap > 0 && todayXP + xp > policy.dailyCap) {
+  if (
+    typeof policy.dailyCap === "number" &&
+    policy.dailyCap > 0 &&
+    todayXP + xp > policy.dailyCap
+  ) {
     xp = policy.dailyCap - todayXP;
     if (xp <= 0) {
       return { success: false, reason: "일일 XP 상한 도달" };
@@ -90,11 +124,11 @@ export async function grantXP({ discordId, guildId, type, baseXP, channelId, req
     { userId: discordId, guildId },
     {
       $inc: { xp },
-      $push: { xpHistory: { date: new Date(), amount: xp } }
+      $push: { xpHistory: { date: new Date(), amount: xp } },
     },
-    { new: true, upsert: true }
+    { new: true, upsert: true },
   );
   // 쿨타임 갱신 (Redis)
   await redis.set(cooldownKey, now.toString(), "PX", policy.cooldownSec * 1000);
   return { success: true, xp, user: updated };
-} 
+}
