@@ -29,6 +29,11 @@ export async function GET(req: NextRequest) {
       username: userInfo.username,
       avatar: userInfo.avatar,
       email: userInfo.email,
+      accessToken: tokenRes.access_token,
+      refreshToken: tokenRes.refresh_token,
+      tokenType: tokenRes.token_type,
+      expiresIn: tokenRes.expires_in,
+      scope: tokenRes.scope
     });
     const res = NextResponse.redirect("/dashboard");
     res.cookies.set("jwt", jwtToken, {

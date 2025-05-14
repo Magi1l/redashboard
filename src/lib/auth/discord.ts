@@ -45,7 +45,7 @@ export async function getDiscordUserInfo(access_token: string) {
 }
 
 export function signJwt(payload: object, expiresIn: number | string = "7d") {
-  return jwt.sign(payload, JWT_SECRET, { expiresIn: expiresIn as any });
+  return jwt.sign(payload, JWT_SECRET, { expiresIn: expiresIn as unknown as number | undefined });
 }
 
 export function verifyJwt(token: string) {

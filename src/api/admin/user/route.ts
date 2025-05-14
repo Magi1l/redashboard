@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/api/auth/[...nextauth]/route";
+import { getServerUser } from "@/lib/auth/discord";
 import { connectDB } from "@/lib/mongodb";
 import UserModel from "@/lib/models/User";
 import LevelModel from "@/lib/models/Level";
@@ -23,8 +22,8 @@ const User = UserModel as mongoose.Model<UserDoc>;
 const Level = LevelModel as mongoose.Model<LevelDoc>;
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession({ req, ...authOptions });
-  if (!session) {
+  const user = await getServerUser();
+  if (!user || typeof user === "string") {
     return new NextResponse("Unauthorized", { status: 401 });
   }
   await connectDB();

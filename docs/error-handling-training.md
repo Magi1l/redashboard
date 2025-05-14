@@ -113,30 +113,28 @@ export async function measureDbQuery<T>(label: string, fn: () => Promise<T>): Pr
 ### 코드 예시
 ```ts
 // src/api/monitoring-test/route.ts
-export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user?.email !== ADMIN_EMAIL) {
-    return NextResponse.json({ error: "권한 없음" }, { status: 403 });
-  }
-  const timer = startTimer("/api/monitoring-test");
-  let status = 200;
-  let errorMsg = undefined;
-  try {
-    const url = new URL(req.url);
-    const type = url.searchParams.get("type") || "ok";
-    if (type === "error") throw new Error("강제 에러 발생 (실습)");
-    if (type === "slow") await new Promise(res => setTimeout(res, 2500));
-    if (type === "alert") await sendDiscordAlert("[실습] 수동 알림 트리거");
-    return NextResponse.json({ message: `테스트 성공 (${type})` });
-  } catch (err: any) {
-    status = 500;
-    errorMsg = err.message;
-    await sendDiscordAlert(`[API ERROR] /api/monitoring-test: ${err.message}`);
-    return NextResponse.json({ error: err.message }, { status });
-  } finally {
-    const duration = endTimer(timer);
-    recordMetric("/api/monitoring-test", status, duration, errorMsg);
-  }
+const user = await getServerUser();
+if (!user || typeof user === "string") {
+  return NextResponse.json({ error: "권한 없음" }, { status: 403 });
+}
+const timer = startTimer("/api/monitoring-test");
+let status = 200;
+let errorMsg = undefined;
+try {
+  const url = new URL(req.url);
+  const type = url.searchParams.get("type") || "ok";
+  if (type === "error") throw new Error("강제 에러 발생 (실습)");
+  if (type === "slow") await new Promise(res => setTimeout(res, 2500));
+  if (type === "alert") await sendDiscordAlert("[실습] 수동 알림 트리거");
+  return NextResponse.json({ message: `테스트 성공 (${type})` });
+} catch (err: any) {
+  status = 500;
+  errorMsg = err.message;
+  await sendDiscordAlert(`[API ERROR] /api/monitoring-test: ${err.message}`);
+  return NextResponse.json({ error: err.message }, { status });
+} finally {
+  const duration = endTimer(timer);
+  recordMetric("/api/monitoring-test", status, duration, errorMsg);
 }
 ```
 

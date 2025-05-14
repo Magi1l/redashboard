@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { uploadToVercelBlob } from "../../lib/vercel-blob";
-import { getServerSession } from "next-auth";
-import { authOptions } from "../../lib/auth";
+import { getServerUser } from "@/lib/auth/discord";
 import { v4 as uuidv4 } from "uuid";
 
 export const runtime = "edge";
@@ -16,8 +15,8 @@ const ALLOWED_TYPES = [
 ];
 
 export async function POST(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session) {
+  const user = await getServerUser();
+  if (!user || typeof user === "string") {
     return NextResponse.json({ error: "인증 필요" }, { status: 401 });
   }
   const formData = await req.formData();

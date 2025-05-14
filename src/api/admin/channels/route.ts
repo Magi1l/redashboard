@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/api/auth/[...nextauth]/route";
+import { getServerUser } from "@/lib/auth/discord";
 
 const BOT_TOKEN = process.env.DISCORD_BOT_TOKEN;
 
@@ -17,8 +16,8 @@ interface Channel {
 }
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession({ req, ...authOptions });
-  if (!session) {
+  const user = await getServerUser();
+  if (!user || typeof user === "string") {
     return new NextResponse("Unauthorized", { status: 401 });
   }
   const { searchParams } = new URL(req.url);

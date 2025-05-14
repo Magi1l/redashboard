@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getServerUser } from "@/lib/auth/discord";
 import { recordMetric } from "@/lib/monitoring/metrics";
 import { startTimer, endTimer } from "@/lib/monitoring/performance";
 import { sendDiscordAlert } from "@/lib/monitoring/alert";
@@ -8,8 +7,8 @@ import { sendDiscordAlert } from "@/lib/monitoring/alert";
 const ADMIN_EMAIL = "admin@example.com"; // 실제 운영자 이메일로 교체
 
 export async function GET(req: NextRequest) {
-  const session = await getServerSession(authOptions);
-  if (!session || session.user?.email !== ADMIN_EMAIL) {
+  const user = await getServerUser();
+  if (!user || typeof user === "string" || user.email !== ADMIN_EMAIL) {
     return NextResponse.json({ error: "권한 없음" }, { status: 403 });
   }
   const timer = startTimer("/api/monitoring-test");
