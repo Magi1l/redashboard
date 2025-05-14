@@ -6,8 +6,12 @@ if (!MONGODB_URI) {
   throw new Error("MONGODB_URI 환경변수가 설정되어 있지 않습니다.");
 }
 
-// 글로벌 타입 선언을 활용해 as any 제거
-const cached: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null } = global.mongoose || { conn: null, promise: null };
+interface MongooseCache {
+  conn: typeof mongoose | null;
+  promise: Promise<typeof mongoose> | null;
+}
+
+const cached: MongooseCache = global.mongoose || { conn: null, promise: null };
 
 export async function connectDB() {
   if (cached.conn) return cached.conn;
