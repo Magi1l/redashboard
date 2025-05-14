@@ -12,6 +12,13 @@ const NotificationSchema = new Schema({
   system: { type: Boolean, default: true },
 }, { _id: false });
 
+// 중복 export 방지: type으로 선언
+export type Notification = {
+  levelUp: boolean;
+  reward: boolean;
+  system: boolean;
+};
+
 const ActivityXPPolicySchema = new Schema({
   enabled: { type: Boolean, default: true },
   minXP: { type: Number, default: 1 },
@@ -78,6 +85,7 @@ export interface ActivityXPPolicyItem {
 }
 
 export interface ConfigDocument extends mongoose.Document {
+  notifications?: Notification;
   activityXPPolicy?: {
     message?: ActivityXPPolicyItem;
     voice?: ActivityXPPolicyItem;
