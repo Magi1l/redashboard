@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "../auth/[...nextauth]/route";
+import type { CustomSession } from "../auth/[...nextauth]/route";
 
 // Discord API 서버 타입 명확화
 interface ServerRaw {
@@ -16,7 +17,7 @@ interface Server {
 }
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions) as CustomSession;
   if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }

@@ -7,7 +7,7 @@ import type { JWT } from "next-auth/jwt";
 
 // 커스텀 Session 타입 확장
 export interface CustomSession extends Session {
-  user: Session["user"] & { id?: string };
+  user: Session["user"] & { id?: string; accessToken?: string };
 }
 
 export const authOptions = {
@@ -23,6 +23,7 @@ export const authOptions = {
   callbacks: {
     async session({ session, token }: { session: Session; token: JWT }) {
       (session as CustomSession).user.id = token.sub;
+      (session as CustomSession).user.accessToken = token.accessToken as string | undefined;
       return session;
     },
   },
