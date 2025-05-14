@@ -3,6 +3,8 @@ import { connectDB } from "@/lib/mongodb";
 import UserDefault from "@/lib/models/User";
 import LevelDefault from "@/lib/models/Level";
 import PurchaseDefault from "@/lib/models/Purchase";
+import type { PurchaseDocument } from "@/lib/models/Purchase";
+import type { Model } from "mongoose";
 import { errorResponse } from "@/lib/middleware/errorResponse";
 import { recordMetric } from "@/lib/monitoring/metrics";
 import { log } from "@/lib/logging/logger";
@@ -34,7 +36,7 @@ interface PurchaseLean {
   purchasedAt: Date;
   quantity: number;
 }
-// User, Level, Purchase mongoose 타입 명확화
+// User, Level mongoose 타입 명확화
 interface UserDoc extends mongoose.Document {
   discordId: string;
   username?: string;
@@ -52,16 +54,9 @@ interface LevelDoc extends mongoose.Document {
   lastMessage: Date;
   xpHistory: { date: Date; amount: number }[];
 }
-interface PurchaseDoc extends mongoose.Document {
-  userId: string;
-  itemId: string;
-  guildId: string;
-  purchasedAt: Date;
-  quantity: number;
-}
 const User = UserDefault as mongoose.Model<UserDoc>;
 const Level = LevelDefault as mongoose.Model<LevelDoc>;
-const Purchase = PurchaseDefault as mongoose.Model<PurchaseDoc>;
+const Purchase = PurchaseDefault as Model<PurchaseDocument>;
 
 export async function GET(req: NextRequest) {
   const endpoint = "/api/profile";
@@ -78,11 +73,12 @@ export async function GET(req: NextRequest) {
       status = 400;
       errorMsg = "discordId, guildId required";
       log.warn("필수 파라미터 누락", { discordId, guildId });
-      return NextResponse.json(errorResponse({ code: "BE4001", message: errorMsg }, 400), { status });
+      return NextResponse.json(errorResponse({ code: "BE4001", message: errorMsg }), { status });
     }
     const user = await measureDbQuery("User.findOne", () => User.findOne({ discordId }).lean()) as UserLean | null;
     const level = await measureDbQuery("Level.findOne", () => Level.findOne({ userId: discordId, guildId }).lean()) as LevelLean | null;
-    const purchases = await measureDbQuery("Purchase.find", () => Purchase.find({ userId: discordId, guildId }).lean()) as PurchaseLean[];
+    const purchasesRaw = await measureDbQuery("Purchase.find", () => Purchase.find({ userId: discordId, guildId }).lean()) as any[];
+    const purchases: PurchaseLean[] = purchasesRaw.map((p) => ({ ...p, itemId: p.itemId?.toString?.() ?? p.itemId }));
     log.info("프로필 데이터 조회 성공", { discordId, guildId });
     return NextResponse.json({ user, level, purchases });
   } catch (err: unknown) {
