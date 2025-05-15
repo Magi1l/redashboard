@@ -1,3 +1,4 @@
+"use client";
 import React from "react";
 
 // 임의의 프로필 카드 데이터
